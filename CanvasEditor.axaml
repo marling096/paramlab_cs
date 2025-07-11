@@ -1,0 +1,9 @@
+<UserControl 
+    x:Class="paramlab_cs.CanvasEditor"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+    <Canvas x:Name="EditorCanvas" Background="White">
+    </Canvas>
+    </Grid>
+</UserControl>

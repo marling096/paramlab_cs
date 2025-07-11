@@ -1,0 +1,240 @@
+// // AvaloniaEditorSample/App.axaml
+// <Application xmlns="https://github.com/avaloniaui"
+//              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+//              x:Class="AvaloniaEditorSample.App">
+//   <Application.Styles>
+//     <FluentTheme />
+//   </Application.Styles>
+// </Application>
+
+// // AvaloniaEditorSample/App.axaml.cs
+// using Avalonia;
+// using Avalonia.Controls.ApplicationLifetimes;
+// using Avalonia.Markup.Xaml;
+
+// namespace AvaloniaEditorSample;
+
+// public class App : Application
+// {
+//     public override void Initialize() => AvaloniaXamlLoader.Load(this);
+
+//     public override void OnFrameworkInitializationCompleted()
+//     {
+//         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+//         {
+//             desktop.MainWindow = new MainWindow();
+//         }
+
+//         base.OnFrameworkInitializationCompleted();
+//     }
+// }
+
+// // AvaloniaEditorSample/MainWindow.axaml
+// <Window xmlns="https://github.com/avaloniaui"
+//         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+//         xmlns:local="clr-namespace:AvaloniaEditorSample"
+//         x:Class="AvaloniaEditorSample.MainWindow"
+//         Width="800" Height="600" Title="Visual Editor">
+//   <Grid>
+//     <Grid.RowDefinitions>
+//       <RowDefinition Height="Auto" />
+//       <RowDefinition Height="*" />
+//     </Grid.RowDefinitions>
+//     <Grid.ColumnDefinitions>
+//       <ColumnDefinition Width="150" />
+//       <ColumnDefinition Width="*" />
+//     </Grid.ColumnDefinitions>
+
+//     <!-- Toolbar -->
+//     <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2" Margin="5">
+//       <Button Content="Add Rectangle" Click="OnAddRectangleClick" Margin="0,0,5,0" />
+//       <Button Content="Save" Click="OnSaveClick" Margin="0,0,5,0" />
+//       <Button Content="Load" Click="OnLoadClick" />
+//     </StackPanel>
+
+//     <!-- Toolbox -->
+//     <StackPanel Grid.Column="0" Grid.Row="1" Margin="5">
+//       <TextBlock Text="Toolbox" FontWeight="Bold" />
+//     </StackPanel>
+
+//     <!-- Canvas -->
+//     <Border Grid.Column="1" Grid.Row="1" Background="LightGray" Margin="5">
+//       <Canvas x:Name="EditorCanvas" Background="White" />
+//     </Border>
+//   </Grid>
+// </Window>
+
+// // AvaloniaEditorSample/MainWindow.axaml.cs
+// using Avalonia;
+// using Avalonia.Controls;
+// using Avalonia.Input;
+// using Avalonia.Markup.Xaml;
+// using Avalonia.Media;
+// using Avalonia.Platform.Storage;
+// using System;
+// using System.Collections.Generic;
+// using System.IO;
+// using System.Text.Json;
+// using System.Threading.Tasks;
+
+// namespace AvaloniaEditorSample;
+
+// public partial class MainWindow : Window
+// {
+//     private Point _dragStart;
+//     private Control? _dragging;
+//     private List<Control> _components = new();
+
+//     public MainWindow()
+//     {
+//         InitializeComponent();
+// #if DEBUG
+//         this.AttachDevTools();
+// #endif
+//     }
+
+//     private void OnAddRectangleClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+//     {
+//         var rect = CreateRectangle();
+//         AddComponent(rect, 50, 50);
+//     }
+
+//     private Control CreateRectangle()
+//     {
+//         var rect = new Border
+//         {
+//             Width = 100,
+//             Height = 50,
+//             Background = Brushes.SkyBlue,
+//             BorderBrush = Brushes.Black,
+//             BorderThickness = new Thickness(1),
+//         };
+
+//         rect.PointerPressed += OnDragStart;
+//         rect.PointerMoved += OnDrag;
+//         rect.PointerReleased += OnDragEnd;
+
+//         return rect;
+//     }
+
+//     private void AddComponent(Control ctrl, double x, double y)
+//     {
+//         Canvas.SetLeft(ctrl, x);
+//         Canvas.SetTop(ctrl, y);
+//         EditorCanvas.Children.Add(ctrl);
+//         _components.Add(ctrl);
+//     }
+
+//     private void OnDragStart(object? sender, PointerPressedEventArgs e)
+//     {
+//         if (sender is Control ctrl)
+//         {
+//             _dragStart = e.GetPosition(EditorCanvas);
+//             _dragging = ctrl;
+//             e.Pointer.Capture(ctrl);
+//         }
+//     }
+
+//     private void OnDrag(object? sender, PointerEventArgs e)
+//     {
+//         if (_dragging != null && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+//         {
+//             var pos = e.GetPosition(EditorCanvas);
+//             double dx = pos.X - _dragStart.X;
+//             double dy = pos.Y - _dragStart.Y;
+
+//             var left = Canvas.GetLeft(_dragging);
+//             var top = Canvas.GetTop(_dragging);
+
+//             Canvas.SetLeft(_dragging, left + dx);
+//             Canvas.SetTop(_dragging, top + dy);
+
+//             _dragStart = pos;
+//         }
+//     }
+
+//     private void OnDragEnd(object? sender, PointerReleasedEventArgs e)
+//     {
+//         e.Pointer.Capture(null);
+//         _dragging = null;
+//     }
+
+//     private async void OnSaveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+//     {
+//         var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+//         if (storage == null) return;
+
+//         var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+//         {
+//             SuggestedFileName = "components.json"
+//         });
+
+//         if (file == null) return;
+
+//         var data = new List<ComponentModel>();
+//         foreach (var ctrl in _components)
+//         {
+//             data.Add(new ComponentModel
+//             {
+//                 Type = "Rectangle", // simple type name
+//                 X = Canvas.GetLeft(ctrl),
+//                 Y = Canvas.GetTop(ctrl)
+//             });
+//         }
+
+//         await using var stream = await file.OpenWriteAsync();
+//         await JsonSerializer.SerializeAsync(stream, data);
+//     }
+
+//     private async void OnLoadClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+//     {
+//         var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+//         if (storage == null) return;
+
+//         var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions());
+//         if (files.Count == 0) return;
+
+//         await using var stream = await files[0].OpenReadAsync();
+//         var data = await JsonSerializer.DeserializeAsync<List<ComponentModel>>(stream);
+
+//         if (data == null) return;
+
+//         EditorCanvas.Children.Clear();
+//         _components.Clear();
+
+//         foreach (var model in data)
+//         {
+//             if (model.Type == "Rectangle")
+//             {
+//                 var rect = CreateRectangle();
+//                 AddComponent(rect, model.X, model.Y);
+//             }
+//         }
+//     }
+
+//     private class ComponentModel
+//     {
+//         public string Type { get; set; } = "";
+//         public double X { get; set; }
+//         public double Y { get; set; }
+//     }
+// }
+
+// // AvaloniaEditorSample/AvaloniaEditorSample.csproj
+// <Project Sdk="Microsoft.NET.Sdk">
+
+//   <PropertyGroup>
+//     <OutputType>WinExe</OutputType>
+//     <TargetFramework>net8.0</TargetFramework>
+//     <Nullable>enable</Nullable>
+//     <UseWPF>false</UseWPF>
+//     <UseWindowsForms>false</UseWindowsForms>
+//   </PropertyGroup>
+
+//   <ItemGroup>
+//     <PackageReference Include="Avalonia" Version="11.0.6" />
+//     <PackageReference Include="Avalonia.Desktop" Version="11.0.6" />
+//     <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.6" />
+//   </ItemGroup>
+
+// </Project>

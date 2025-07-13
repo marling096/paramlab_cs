@@ -21,4 +21,9 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="System.IO.Ports" Version="9.0.6" />
   </ItemGroup>
-</Project>
+
+  <ItemGroup>
+  <AvaloniaResource Include="assets/editor-bg.png" />
+</ItemGroup>
+
+</Project>  

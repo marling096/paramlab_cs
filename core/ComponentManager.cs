@@ -40,6 +40,8 @@ namespace core
 
         protected abstract Control CreateView();
 
+        protected abstract Control CreateParamPanel();
+
         protected void Subscribe<T>(string eventName, Action<T> handler)
         {
             EventHub.Instance.Subscribe(eventName, handler);

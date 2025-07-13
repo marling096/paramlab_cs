@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -17,9 +18,9 @@ namespace components
             Id = id;
         }
         private TextBlock? _text;
-        // private string _eventName;
-        private string[] _events = new string[] { };
+        private List<string> subs = new List<string>();
 
+        private List<string> pubs = new List<string>();
         public static string Description { get; } = "显示器";
         public override string Id { get; set; }
 
@@ -39,10 +40,6 @@ namespace components
         public override void Deactivate()
         {
             //停用时可以做一些清理工作
-            foreach (var sub in _events)
-            {
-                UnSubscribe<string>(sub, OnEvent);
-            }
 
         }
 
@@ -50,7 +47,7 @@ namespace components
         {
             if (_eventName != null)
             {
-                _events.Append(_eventName);
+                subs.Add(_eventName);
                 Subscribe<string>(_eventName, OnEvent);
             }
 
@@ -67,9 +64,17 @@ namespace components
             //do nothing
             if (_eventName != null)
             {
-                _events.Append(_eventName);
+                pubs.Add(_eventName);
                 Publish<string>(_eventName, "test success");
             }
+        }
+
+        protected override Control CreateParamPanel()
+        {
+
+
+            return new Canvas { };
+            
         }
         protected override Control CreateView()
         {
@@ -87,21 +92,6 @@ namespace components
                 Background = Brushes.LightGreen
             };
             grid.Children.Add(canvas);
-            // grid.PointerPressed += (s, e) =>
-            //     {
-            //         var point = e.GetCurrentPoint(s as Control);
-            //         if (point.Properties.IsRightButtonPressed)
-            //         {
-            //             e.Handled = true; // 阻止传给 Canvas
-            //             Console.WriteLine("阻止传给 Canvas");
-            //         }
-            //         else
-            //         {
-            //             Console.WriteLine("未阻止");
-            //         }
-
-
-            //     };
             return grid;
         }
     }

@@ -72,28 +72,6 @@ namespace core
 
     }
 
-    public class EventSubscription
-    {
-        public string EventName { get; set; }
-        public Action<object?> Handler { get; set; }
 
-        public EventSubscription(string eventName, Action<object?> handler)
-        {
-            EventName = eventName;
-            Handler = handler;
-        }
-    }
-
-    public class EventPublisher
-    {
-        public string EventName { get; set; }
-        public Func<object?> GetValue { get; set; }
-
-        public EventPublisher(string eventName, Func<object?> getValue)
-        {
-            EventName = eventName;
-            GetValue = getValue;
-        }
-    }
 }
 

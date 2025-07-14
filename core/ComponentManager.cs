@@ -7,6 +7,7 @@ using Avalonia.Controls;
 
 namespace core
 {
+
     public interface IVisualComponent : IDisposable
     {
         string Id { get; set; }
@@ -35,6 +36,12 @@ namespace core
         public virtual Control GetView()
         {
             view ??= CreateView();
+            return view!;
+        }
+
+        public virtual Control GetParamPanel()
+        {
+            view ??= CreateParamPanel();
             return view!;
         }
 
@@ -68,7 +75,7 @@ namespace core
     public class ComponentManager
     {
 
-        private Dictionary<string, IVisualComponent> Components = new();
+        private Dictionary<string, VisualComponentBase> Components = new();
         private Dictionary<string, Type> ComponentTypes = new();
 
         public void RegisterBase(string @namespace)
@@ -78,7 +85,7 @@ namespace core
                 .Where(t => t.IsClass &&
                             !t.IsAbstract &&
                             t.Namespace == @namespace &&
-                            typeof(IVisualComponent).IsAssignableFrom(t));
+                            typeof(VisualComponentBase).IsAssignableFrom(t));
             ComponentTypes = types.ToDictionary(t => t.GetProperty("Description")?.GetValue(null) as string ??
                 throw new ArgumentException($"Component {t.Name} does not have a static Description property."),
                                                   t => t);
@@ -94,11 +101,22 @@ namespace core
 
             if (ComponentTypes.TryGetValue(Description, out var type))
             {
-                var component = (IVisualComponent)Activator.CreateInstance(type, Id)!;
+                var component = (VisualComponentBase)Activator.CreateInstance(type, Id)!;
                 component.Initialize();
                 component.Activate();
                 Components[Id] = component;
                 return component.GetView();
+            }
+            throw new ArgumentException($"Component with description '{Description}' not found.");
+        }
+
+        public Control CreateParamPanel(string Description, string Id)
+        {
+
+            if (ComponentTypes.TryGetValue(Description, out var type))
+            {
+                var component = (VisualComponentBase)Activator.CreateInstance(type, Id)!;
+                return component.GetParamPanel();
             }
             throw new ArgumentException($"Component with description '{Description}' not found.");
         }

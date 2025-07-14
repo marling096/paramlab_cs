@@ -39,18 +39,9 @@ namespace paramlab_cs
         private Point _dragStart;
         private Control? _dragging;
         private Dictionary<string, string> components = new();
-        private Dictionary<Control, string> _components = new();
+        private Dictionary<Control, string> _components = new();//ctrl id
         private List<string> BaseList = new();
         private ContextMenu contextMenu = new ContextMenu();
-        private Window win = new Window
-        {
-            Width = 400,
-            Height = 300,
-            Title = "组件编辑",
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            SystemDecorations = SystemDecorations.Full, // 有边框与标题栏
-            CanResize = true
-        };
         private double currentX = 0;
         private double currentY = 0;
 
@@ -83,7 +74,7 @@ namespace paramlab_cs
         {
             var id = Guid.NewGuid().ToString();
             Control ctrl = manger.CreateFromBase(description, id);
-            components[description] = id;
+            components[id] = description;
             _components[ctrl] = id;
             Canvas.SetLeft(ctrl, x);
             Canvas.SetTop(ctrl, y);
@@ -121,10 +112,13 @@ namespace paramlab_cs
                 if (sender is Control ctrl)
                 {
                     var id = _components.TryGetValue(ctrl, out var componentId) ? componentId : null;
-                    // var 
+                    var des = components.TryGetValue(id, out var description) ? description : null;
+                    var pal = manger.CreateParamPanel(des, id);
+                    if (pal is Window win)
+                    {
+                        win.Show();
+                    }
                 }
-
-                // win.Show();
 
             }
 

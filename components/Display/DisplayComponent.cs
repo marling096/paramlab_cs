@@ -16,10 +16,10 @@ namespace components
 
     public class Params : ObservableObject
     {
-        private string _name = "Display";
-        public List<string> subs { get; set; } = new();
-        public List<string> pubs { get; set; } = new();
+        public List<string> Subs { set; get; } = new List<string>();
+        public List<string> Pubs { set; get; } = new List<string>();
     }
+
 
     public class DisplayView : Control
     {
@@ -29,35 +29,40 @@ namespace components
         }
         public Control CreateComponentView()
         {
-            var grid = new Grid
-            {
-                Width = 200,
-                Height = 100,
-                Background = Brushes.LightGreen
-            };
-            var canvas = new Canvas
-            {
-
-                Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 255))
-            };
-            grid.Children.Add(canvas);
-            return grid;
+            // var grid = new Grid
+            // {
+            //     Width = 200,
+            //     Height = 100,
+            //     Background = Brushes.LightGreen
+            // };
+            // var canvas = new Canvas
+            // {
+            //     Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 255))
+            // };
+            // grid.Children.Add(canvas);
+            // return grid;
+            ComponentBody Comp = new ComponentBody();
+            return Comp.getView();
         }
 
         public Control CreateEditView(Params param)
         {
             var win = new Window
             {
-                Width = 400,
+                Width = 500,
                 Height = 300,
                 Title = "组件编辑",
+                CornerRadius = new CornerRadius(1),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 SystemDecorations = SystemDecorations.Full, // 有边框与标题栏
                 CanResize = true
             };
             var propertyGrid = new PropertyGrid
             {
-                Margin = new Thickness(10),
+                BorderThickness = new Thickness(1),
+                Background = Brushes.Black,
+                CornerRadius = new CornerRadius(0.5),
+                Margin = new Thickness(1),
                 DataContext = param,
             };
             win.Content = propertyGrid;
@@ -69,14 +74,15 @@ namespace components
     public class DisplayComponent : VisualComponentBase
     {
 
-        static Params DisplayParams = new Params();
+        public Params DisplayParams;
 
         private Lazy<DisplayView> ComponentView = new Lazy<DisplayView>();
+
         public DisplayComponent(string id)
         {
             Id = id;
+            DisplayParams = new Params();
         }
-        private TextBlock? _text;
 
         public static string Description { get; } = "显示器";
         public override string Id { get; set; }
@@ -106,7 +112,7 @@ namespace components
         {
             if (_eventName != null)
             {
-                DisplayParams.subs.Add(_eventName);
+                DisplayParams.Subs.Add(_eventName);
                 Subscribe<string>(_eventName, OnEvent);
             }
 
@@ -116,7 +122,7 @@ namespace components
         {
             //show data
             Console.WriteLine($"Event received: {data}");
-            foreach (var sub in DisplayParams.subs)
+            foreach (var sub in DisplayParams.Subs)
             {
                 Console.WriteLine($"Subscribed to {sub}");
             }
@@ -127,14 +133,15 @@ namespace components
             //do nothing
             if (_eventName != null)
             {
-                DisplayParams.pubs.Add(_eventName);
+                DisplayParams.Pubs.Add(_eventName);
                 Publish<string>(_eventName, "test success");
             }
         }
 
-        protected override Control CreateParamPanel()
+        protected override Control CreateParamView()
         {
             return ComponentView.Value.CreateEditView(DisplayParams);
+
         }
         protected override Control CreateView()
         {

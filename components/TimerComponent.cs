@@ -17,7 +17,6 @@ namespace components
         {
             Id = id;
         }
-        private TextBlock? _text;
         private List<string> subs = new List<string>();
 
         private List<string> pubs = new List<string>();
@@ -69,15 +68,15 @@ namespace components
             }
         }
 
-        protected override Control CreateParamPanel()
+        protected override Control CreateParamView()
         {
 
 
             return new Canvas
             {
                 Background = Brushes.LightGreen,
-             };
-            
+            };
+
         }
         protected override Control CreateView()
         {

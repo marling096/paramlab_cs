@@ -8,6 +8,6 @@
             VerticalAlignment="Stretch"
             Source="avares://paramlab_cs/assets/editor-bg.png"
             Stretch="UniformToFill" />
-        <Canvas x:Name="EditorCanvas" Background="#84FFFFFF" />
+        <Canvas x:Name="EditorCanvas" Background="#84FFFFFF"/>
     </Grid>
 </UserControl>

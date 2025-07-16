@@ -12,16 +12,18 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using core;
+using Avalonia.Controls.ApplicationLifetimes;
 
 
 namespace paramlab_cs
 {
     public partial class CanvasEditor : UserControl
     {
+
         public CanvasEditor(ComponentManager manger)
         {
-            this.manger = manger;
-            var t = this.manger.GetAll();
+            this.manager = manger;
+            var t = this.manager.GetAll();
             foreach (var c in t)
             {
                 BaseList.Add(c.Key);
@@ -35,7 +37,7 @@ namespace paramlab_cs
             InitializeComponent();
             EditorCanvas.PointerPressed += PointerPressedHandler;
         }
-        public ComponentManager manger = new ComponentManager();
+        public ComponentManager manager = new ComponentManager();
         private Point _dragStart;
         private Control? _dragging;
         private Dictionary<string, string> components = new();
@@ -56,24 +58,19 @@ namespace paramlab_cs
             var point = args.GetCurrentPoint(sender as Control);
             this.currentX = point.Position.X;
             this.currentY = point.Position.Y;
-            var msg = "";
             if (point.Properties.IsLeftButtonPressed)
             {
-                msg += " Left button pressed.";
             }
             if (point.Properties.IsRightButtonPressed)
             {
-                msg += " Right button pressed.";
                 contextMenu.Open(EditorCanvas);
             }
-
-            Console.WriteLine(msg);
         }
 
         public void AddComponent(string description, double x, double y)
         {
             var id = Guid.NewGuid().ToString();
-            Control ctrl = manger.CreateFromBase(description, id);
+            Control ctrl = manager.CreateFromBase(description, id);
             components[id] = description;
             _components[ctrl] = id;
             Canvas.SetLeft(ctrl, x);
@@ -87,12 +84,12 @@ namespace paramlab_cs
         }
         private void AddInput(string id, string subscription)
         {
-            manger.AddComponentIn(id, subscription);
+            manager.AddComponentIn(id, subscription);
         }
 
         private void AddOutput(string id, string publisher)
         {
-            manger.AddComponentOut(id, publisher);
+            manager.AddComponentOut(id, publisher);
         }
         private void ComponentPressed(object? sender, PointerPressedEventArgs e)
         {
@@ -111,12 +108,15 @@ namespace paramlab_cs
                 e.Handled = true; // 阻止传给 Canvas
                 if (sender is Control ctrl)
                 {
-                    var id = _components.TryGetValue(ctrl, out var componentId) ? componentId : null;
-                    var des = components.TryGetValue(id, out var description) ? description : null;
-                    var pal = manger.CreateParamPanel(des, id);
+                    var id = _components.TryGetValue(ctrl, out var componentId) ? componentId : throw new ArgumentException("Component not found.");
+                    var des = components.TryGetValue(id, out var description) ? description : throw new ArgumentException("Description not found.");
+                    var pal = manager.CreateParamPanel(des, id);
                     if (pal is Window win)
                     {
-                        win.Show();
+                        var mainWindow = Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                                ? desktop.MainWindow: null;
+
+                        win.Show(mainWindow);
                     }
                 }
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Tmds.DBus.Protocol;
 
 namespace core
 {
@@ -39,15 +40,14 @@ namespace core
             return view!;
         }
 
-        public virtual Control GetParamPanel()
+        public virtual Control GetParamView()
         {
-            view ??= CreateParamPanel();
-            return view!;
+            return CreateParamView()!;
         }
 
         protected abstract Control CreateView();
 
-        protected abstract Control CreateParamPanel();
+        protected abstract Control CreateParamView();
 
         protected void Subscribe<T>(string eventName, Action<T> handler)
         {
@@ -112,11 +112,10 @@ namespace core
 
         public Control CreateParamPanel(string Description, string Id)
         {
-
-            if (ComponentTypes.TryGetValue(Description, out var type))
+            var comp = Components[Id];
+            if (comp != null)
             {
-                var component = (VisualComponentBase)Activator.CreateInstance(type, Id)!;
-                return component.GetParamPanel();
+                return comp.GetParamView();
             }
             throw new ArgumentException($"Component with description '{Description}' not found.");
         }

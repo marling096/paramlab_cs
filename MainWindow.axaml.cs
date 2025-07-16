@@ -12,16 +12,20 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
         var manager = new ComponentManager();
         manager.RegisterBase("components");
         var editor = new CanvasEditor(manager);
         MainGrid.Children.Add(editor);
-//         var task = new ScheduledTask(500, () =>
-// {
-//     EventHub.Instance.Publish("paramTest", "fetch subs");
-// });
+                var task = new ScheduledTask(500, () =>
+        {
+            EventHub.Instance.Publish("paramTest", "fetch subs");
+        });
+
 
     }
+
+
 }
 
 public class ScheduledTask

@@ -29,7 +29,7 @@ namespace components
             {
                 Width = 200,
                 Height = 100,
-                Background = Brushes.Transparent,
+                Background = Brushes.Blue,
             };
             var canvas = new Canvas
             {

@@ -15,6 +15,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using core;
 using components;
+using Avalonia.Controls.Shapes;
 
 
 namespace Editor
@@ -37,13 +38,12 @@ namespace Editor
             }
             InitializeComponent();
             EditorCanvas.PointerPressed += PointerPressedHandler;
+
         }
 
 
         public ComponentManager manager = new ComponentManager();
-        private Point _dragStart;
-        private Control? _dragging;
-        private Dictionary<string, string> components = new();
+        private Dictionary<string, string> components = new();//id description
         private Dictionary<Control, string> _components = new();//ctrl id
         private List<string> BaseList = new();
         private ContextMenu contextMenu = new ContextMenu();
@@ -78,46 +78,16 @@ namespace Editor
             _components[ctrl] = id;
             Canvas.SetLeft(ctrl, x);
             Canvas.SetTop(ctrl, y);
-            ctrl.PointerPressed += ComponentPressed;
-            ctrl.PointerMoved += OnDrag;
-            ctrl.PointerReleased += OnDragEnd;
-            // EditorCanvas.Children.Add(ctrl);
-            Console.WriteLine($"Component: left {x}, top {y}");    
+            ctrl.PointerPressed += RightPressed;
             DragResizeAdorner addone = new DragResizeAdorner();
-            try
-            {
-                addone.Attach(EditorCanvas, ctrl as Grid ?? throw new InvalidOperationException("Control must be a Grid for resizing."));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error attaching adorner: {ex.Message}");
-            }
-
-
-
+            addone.AttachThumbs(EditorCanvas, ctrl as Grid);
+            Console.WriteLine($"Component: left {x}, top {y}");
 
         }
-        private void AddInput(string id, string subscription)
-        {
-            manager.AddComponentIn(id, subscription);
-        }
 
-        private void AddOutput(string id, string publisher)
-        {
-            manager.AddComponentOut(id, publisher);
-        }
-        private void ComponentPressed(object? sender, PointerPressedEventArgs e)
+        private void RightPressed(object? sender, PointerPressedEventArgs e)
         {
             var point = e.GetCurrentPoint(sender as Control);
-            if (point.Properties.IsLeftButtonPressed)
-            {
-                if (sender is Control ctrl)
-                {
-                    _dragStart = e.GetPosition(EditorCanvas);
-                    _dragging = ctrl;
-                    e.Pointer.Capture(ctrl);
-                }
-            }
             if (point.Properties.IsRightButtonPressed)
             {
                 e.Handled = true; // 阻止传给 Canvas
@@ -139,82 +109,58 @@ namespace Editor
 
         }
 
-        private void OnDrag(object? sender, PointerEventArgs e)
+        private async void OnSaveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (_dragging != null && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+            if (storage == null) return;
+
+            var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                var pos = e.GetPosition(EditorCanvas);
-                double dx = pos.X - _dragStart.X;
-                double dy = pos.Y - _dragStart.Y;
+                SuggestedFileName = "components.json"
+            });
 
-                var left = Canvas.GetLeft(_dragging);
-                var top = Canvas.GetTop(_dragging);
+            if (file == null) return;
 
-                Canvas.SetLeft(_dragging, left + dx);
-                Canvas.SetTop(_dragging, top + dy);
+            var data = new List<ComponentModel>();
+            foreach (var ctrl in _components)
+            {
+                data.Add(new ComponentModel
+                {
+                    Type = "Rectangle", // simple type name
+                    // X = Canvas.GetLeft(ctrl),
+                    // Y = Canvas.GetTop(ctrl)
+                });
+            }
 
-                _dragStart = pos;
+            await using var stream = await file.OpenWriteAsync();
+            await JsonSerializer.SerializeAsync(stream, data);
+        }
+
+        private async void OnLoadClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+            if (storage == null) return;
+
+            var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions());
+            if (files.Count == 0) return;
+
+            await using var stream = await files[0].OpenReadAsync();
+            var data = await JsonSerializer.DeserializeAsync<List<ComponentModel>>(stream);
+
+            if (data == null) return;
+
+            EditorCanvas.Children.Clear();
+            _components.Clear();
+
+            foreach (var model in data)
+            {
+                if (model.Type == "Rectangle")
+                {
+                    var rect = new Control();////
+                    // AddComponent(rect, model.X, model.Y);
+                }
             }
         }
-
-        private void OnDragEnd(object? sender, PointerReleasedEventArgs e)
-        {
-            e.Pointer.Capture(null);
-            _dragging = null;
-        }
-
-        // private async void OnSaveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-        // {
-        //     var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
-        //     if (storage == null) return;
-
-        //     var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
-        //     {
-        //         SuggestedFileName = "components.json"
-        //     });
-
-        //     if (file == null) return;
-
-        //     var data = new List<ComponentModel>();
-        //     foreach (var ctrl in _components)
-        //     {
-        //         data.Add(new ComponentModel
-        //         {
-        //             Type = "Rectangle", // simple type name
-        //             X = Canvas.GetLeft(ctrl),
-        //             Y = Canvas.GetTop(ctrl)
-        //         });
-        //     }
-
-        //     await using var stream = await file.OpenWriteAsync();
-        //     await JsonSerializer.SerializeAsync(stream, data);
-        // }
-
-        // private async void OnLoadClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-        // {
-        //     var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
-        //     if (storage == null) return;
-
-        //     var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions());
-        //     if (files.Count == 0) return;
-
-        //     await using var stream = await files[0].OpenReadAsync();
-        //     var data = await JsonSerializer.DeserializeAsync<List<ComponentModel>>(stream);
-
-        //     if (data == null) return;
-
-        //     EditorCanvas.Children.Clear();
-        //     _components.Clear();
-
-        //     foreach (var model in data)
-        //     {
-        //         if (model.Type == "Rectangle")
-        //         {
-        //             var rect = new Control();////
-        //             // AddComponent(rect, model.X, model.Y);
-        //         }
-        //     }
-        // }
 
         private class ComponentModel
         {

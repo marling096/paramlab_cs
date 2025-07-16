@@ -8,36 +8,34 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Avalonia.PropertyGrid.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using core;
 
 namespace components
 {
-
-
-
-
-    public class DisplayView : Control
+    public class OpencvView : Control
     {
 
-        public DisplayView()
+        public OpencvView()
         {
         }
         public Control CreateComponentView()
         {
-            var grid = new Grid
-            {
-                Width = 200,
-                Height = 100,
-                Background = Brushes.Transparent,
-            };
-            var canvas = new Canvas
-            {
-                Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 255))
-            };
-            grid.Children.Add(canvas);
-            return grid;
+            // var grid = new Grid
+            // {
+            //     Width = 200,
+            //     Height = 100,
+            //     Background = Brushes.Blue,
+            // };
+            // var canvas = new Canvas
+            // {
+            //     Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 255))
+            // };
+            // grid.Children.Add(canvas);
+            // return grid;
 
+            return OpenCvModelView.Instance.GetView();
         }
 
         public Control CreateEditView(Params param)
@@ -66,30 +64,26 @@ namespace components
 
     }
 
-    public class DisplayComponent : VisualComponentBase
+    public class OpencvComponent : VisualComponentBase
     {
 
-        public Params DisplayParams;
+        public Params OpencvParams;
 
-        private Lazy<DisplayView> ComponentView = new Lazy<DisplayView>();
+        private Lazy<OpencvView> ComponentView = new Lazy<OpencvView>();
 
-        public DisplayComponent(string id)
+        public OpencvComponent(string id)
         {
             Id = id;
-            DisplayParams = new Params();
+            OpencvParams = new Params();
         }
 
-        public static string Description { get; } = "显示器";
+        public static string Description { get; } = "Opencv组件";
         public override string Id { get; set; }
 
         public override void Initialize()
         {
             //初始化ui
             RegisterSubscriptions("paramTest");
-            RegisterSubscriptions("paramTest1");
-            RegisterSubscriptions("paramTest2");
-            // RegisterPublisher("Test");
-
         }
 
         public override void Activate()
@@ -107,7 +101,7 @@ namespace components
         {
             if (_eventName != null)
             {
-                DisplayParams.Subs.Add(_eventName);
+                OpencvParams.Subs.Add(_eventName);
                 Subscribe<string>(_eventName, OnEvent);
             }
 
@@ -115,12 +109,21 @@ namespace components
 
         private void OnEvent(string data)
         {
-            //show data
-            Console.WriteLine($"Event received: {data}");
-            foreach (var sub in DisplayParams.Subs)
-            {
-                Console.WriteLine($"Subscribed to {sub}");
-            }
+            // try
+            // {
+            //     Dispatcher.UIThread.InvokeAsync(() =>
+            //     {
+            //         var button = OpenCvModelView.Instance.FindControl<Button>("sendbutton");
+            //         // 可选：执行绑定命令
+            //         button.Command?.Execute(button.CommandParameter);
+            //     });
+            // }
+            // catch (Exception ex)
+            // {
+            //     Console.WriteLine($"Error handling event: {ex.Message}");
+            // }
+
+
         }
 
         public override void RegisterPublisher(string? _eventName)
@@ -128,14 +131,14 @@ namespace components
             //do nothing
             if (_eventName != null)
             {
-                DisplayParams.Pubs.Add(_eventName);
+                OpencvParams.Pubs.Add(_eventName);
                 Publish<string>(_eventName, "test success");
             }
         }
 
         protected override Control CreateParamView()
         {
-            return ComponentView.Value.CreateEditView(DisplayParams);
+            return ComponentView.Value.CreateEditView(OpencvParams);
 
         }
         protected override Control CreateView()

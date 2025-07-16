@@ -11,15 +11,16 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using core;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Primitives;
+using core;
+using components;
 
 
-namespace paramlab_cs
+namespace Editor
 {
     public partial class CanvasEditor : UserControl
     {
-
         public CanvasEditor(ComponentManager manger)
         {
             this.manager = manger;
@@ -37,6 +38,8 @@ namespace paramlab_cs
             InitializeComponent();
             EditorCanvas.PointerPressed += PointerPressedHandler;
         }
+
+
         public ComponentManager manager = new ComponentManager();
         private Point _dragStart;
         private Control? _dragging;
@@ -75,11 +78,23 @@ namespace paramlab_cs
             _components[ctrl] = id;
             Canvas.SetLeft(ctrl, x);
             Canvas.SetTop(ctrl, y);
-
             ctrl.PointerPressed += ComponentPressed;
             ctrl.PointerMoved += OnDrag;
             ctrl.PointerReleased += OnDragEnd;
-            EditorCanvas.Children.Add(ctrl);
+            // EditorCanvas.Children.Add(ctrl);
+            Console.WriteLine($"Component: left {x}, top {y}");    
+            DragResizeAdorner addone = new DragResizeAdorner();
+            try
+            {
+                addone.Attach(EditorCanvas, ctrl as Grid ?? throw new InvalidOperationException("Control must be a Grid for resizing."));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error attaching adorner: {ex.Message}");
+            }
+
+
+
 
         }
         private void AddInput(string id, string subscription)
@@ -114,7 +129,7 @@ namespace paramlab_cs
                     if (pal is Window win)
                     {
                         var mainWindow = Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                                ? desktop.MainWindow: null;
+                                ? desktop.MainWindow : null;
 
                         win.Show(mainWindow);
                     }

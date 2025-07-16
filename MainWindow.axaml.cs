@@ -2,6 +2,7 @@ using System;
 using System.Timers;
 using Avalonia.Controls;
 using core;
+using Editor;
 namespace paramlab_cs;
 
 public partial class MainWindow : Window
@@ -15,10 +16,10 @@ public partial class MainWindow : Window
         manager.RegisterBase("components");
         var editor = new CanvasEditor(manager);
         MainGrid.Children.Add(editor);
-        var task = new ScheduledTask(500, () =>
-{
-    EventHub.Instance.Publish("paramTest", "fetch subs");
-});
+//         var task = new ScheduledTask(500, () =>
+// {
+//     EventHub.Instance.Publish("paramTest", "fetch subs");
+// });
 
     }
 }

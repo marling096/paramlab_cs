@@ -40,7 +40,7 @@ namespace components
 
         }
 
-        public Control CreateEditView(Params param)
+        public Control CreateEditView(object param)
         {
             var win = new Window
             {
@@ -69,14 +69,14 @@ namespace components
     public class DisplayComponent : VisualComponentBase
     {
 
-        public Params DisplayParams;
+        public override List<string> Subs { set; get; } = new List<string>();
 
+        public override List<string> Pubs { set; get; } = new List<string>();
         private Lazy<DisplayView> ComponentView = new Lazy<DisplayView>();
 
         public DisplayComponent(string id)
         {
             Id = id;
-            DisplayParams = new Params();
         }
 
         public static string Description { get; } = "显示器";
@@ -107,7 +107,7 @@ namespace components
         {
             if (_eventName != null)
             {
-                DisplayParams.Subs.Add(_eventName);
+                Subs.Add(_eventName);
                 Subscribe<string>(_eventName, OnEvent);
             }
 
@@ -117,7 +117,7 @@ namespace components
         {
             //show data
             Console.WriteLine($"Event received: {data}");
-            foreach (var sub in DisplayParams.Subs)
+            foreach (var sub in Subs)
             {
                 Console.WriteLine($"Subscribed to {sub}");
             }
@@ -128,14 +128,20 @@ namespace components
             //do nothing
             if (_eventName != null)
             {
-                DisplayParams.Pubs.Add(_eventName);
+                Pubs.Add(_eventName);
                 Publish<string>(_eventName, "test success");
             }
         }
 
         protected override Control CreateParamView()
         {
-            return ComponentView.Value.CreateEditView(DisplayParams);
+            var dataContext = new
+            {
+                subs = Subs,
+                pubs = Pubs
+            };
+
+            return ComponentView.Value.CreateEditView(dataContext);
 
         }
         protected override Control CreateView()

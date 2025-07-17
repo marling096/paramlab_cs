@@ -7,19 +7,18 @@ namespace paramlab_cs;
 
 public partial class MainWindow : Window
 {
-    private static readonly Lazy<MainWindow> _instance = new(() => new MainWindow());
-    public static MainWindow Instance => _instance.Value;
     public MainWindow()
     {
         InitializeComponent();
 
-        var manager = new ComponentManager();
-        manager.RegisterBase("components");
-        var editor = new CanvasEditor(manager);
+        ComponentManager.Instance.RegisterBase("components");
+        var editor = new CanvasEditor(this);
+        editor.AddPlugin(new HotKey());
+        editor.AddPlugin(new Filemanager());
         MainGrid.Children.Add(editor);
                 var task = new ScheduledTask(500, () =>
         {
-            EventHub.Instance.Publish("paramTest", "fetch subs");
+            // EventHub.Instance.Publish("paramTest", "fetch subs");
         });
 
 

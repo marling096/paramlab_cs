@@ -16,19 +16,49 @@ using Avalonia.Controls.Primitives;
 using core;
 using components;
 using Avalonia.Controls.Shapes;
+using System.Security.Cryptography;
+using paramlab_cs;
+using Avalonia.VisualTree;
+using System.Text.Json.Serialization;
 
 
 namespace Editor
 {
+
+    public interface EditorPlugin
+    {
+        string Name { get; }
+        void Initialize(CanvasEditor editor);
+    }
+
+
     public partial class CanvasEditor : UserControl
     {
-        public CanvasEditor(ComponentManager manger)
+        public List<ComponentModel> componentsData = new List<ComponentModel>();
+        public List<EditorPlugin> plugins = new List<EditorPlugin>();
+
+        public Dictionary<Control, string> components = new();//ctrl id
+        public Dictionary<string, Control> _components = new();//id ctrl 
+        public ContextMenu contextMenu = new ContextMenu();
+        public double currentX = 0;
+        public double currentY = 0;
+
+        public Action SaveToFile;
+
+        public Action LoadFromFile;
+
+        public Action<KeyEventArgs> Hotkey;
+
+        public Action UnDo;
+
+
+
+        public CanvasEditor(MainWindow win)
         {
-            this.manager = manger;
-            var t = this.manager.GetAll();
+
+            var t = ComponentManager.Instance.GetAllTypes();
             foreach (var c in t)
             {
-                BaseList.Add(c.Key);
                 contextMenu.Items.Add(new MenuItem
                 {
                     Header = c.Key,
@@ -39,16 +69,17 @@ namespace Editor
             InitializeComponent();
             EditorCanvas.PointerPressed += PointerPressedHandler;
 
+
+            win.KeyDown += OnKeyDownHandler;
+
+
         }
 
-
-        public ComponentManager manager = new ComponentManager();
-        private Dictionary<string, string> components = new();//id description
-        private Dictionary<Control, string> _components = new();//ctrl id
-        private List<string> BaseList = new();
-        private ContextMenu contextMenu = new ContextMenu();
-        private double currentX = 0;
-        private double currentY = 0;
+        public void AddPlugin(EditorPlugin plugin)
+        {
+            plugin.Initialize(this);
+            plugins.Add(plugin);
+        }
 
         [RelayCommand]
         private void ContextMenuHandler(string description)
@@ -56,6 +87,11 @@ namespace Editor
             AddComponent(description, currentX, currentY);
         }
 
+        private void OnKeyDownHandler(object? sender, KeyEventArgs e)
+        {
+            Hotkey?.Invoke(e);
+            Console.WriteLine("调用");
+        }
         private void PointerPressedHandler(object? sender, PointerPressedEventArgs args)
         {
             var point = args.GetCurrentPoint(sender as Control);
@@ -70,18 +106,30 @@ namespace Editor
             }
         }
 
-        public void AddComponent(string description, double x, double y)
+        public void AddComponent(string description, double x, double y, string? id = null)
         {
-            var id = Guid.NewGuid().ToString();
-            Control ctrl = manager.CreateFromBase(description, id);
-            components[id] = description;
-            _components[ctrl] = id;
+            if (id == null) id = Guid.NewGuid().ToString();
+            Control ctrl = ComponentManager.Instance.CreateFromBase(description, id);
+            components[ctrl] = id;
+            _components[id] = ctrl;
+            var comp = ComponentManager.Instance.GetComponent(id);
+            componentsData.Add(new ComponentModel
+            {
+                id = id,
+                description = description,
+                Subs = comp.Subs,
+                Pubs = comp.Pubs,
+                X = x,
+                Y = y
+            });
+
             Canvas.SetLeft(ctrl, x);
             Canvas.SetTop(ctrl, y);
             ctrl.PointerPressed += RightPressed;
+
             DragResizeAdorner addone = new DragResizeAdorner();
             addone.AttachThumbs(EditorCanvas, ctrl as Grid);
-            Console.WriteLine($"Component: left {x}, top {y}");
+
 
         }
 
@@ -93,9 +141,8 @@ namespace Editor
                 e.Handled = true; // 阻止传给 Canvas
                 if (sender is Control ctrl)
                 {
-                    var id = _components.TryGetValue(ctrl, out var componentId) ? componentId : throw new ArgumentException("Component not found.");
-                    var des = components.TryGetValue(id, out var description) ? description : throw new ArgumentException("Description not found.");
-                    var pal = manager.CreateParamPanel(des, id);
+                    var id = components.TryGetValue(ctrl, out var componentId) ? componentId : throw new ArgumentException("Component not found.");
+                    var pal = ComponentManager.Instance.CreateParamPanel(id);
                     if (pal is Window win)
                     {
                         var mainWindow = Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
@@ -109,76 +156,51 @@ namespace Editor
 
         }
 
-        private async void OnSaveClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+
+        public void LoadComponents(List<ComponentModel> data)
         {
-            var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
-            if (storage == null) return;
-
-            var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
-            {
-                SuggestedFileName = "components.json"
-            });
-
-            if (file == null) return;
-
-            var data = new List<ComponentModel>();
-            foreach (var ctrl in _components)
-            {
-                data.Add(new ComponentModel
-                {
-                    Type = "Rectangle", // simple type name
-                    // X = Canvas.GetLeft(ctrl),
-                    // Y = Canvas.GetTop(ctrl)
-                });
-            }
-
-            await using var stream = await file.OpenWriteAsync();
-            await JsonSerializer.SerializeAsync(stream, data);
-        }
-
-        private async void OnLoadClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
-            if (storage == null) return;
-
-            var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions());
-            if (files.Count == 0) return;
-
-            await using var stream = await files[0].OpenReadAsync();
-            var data = await JsonSerializer.DeserializeAsync<List<ComponentModel>>(stream);
-
-            if (data == null) return;
-
             EditorCanvas.Children.Clear();
-            _components.Clear();
-
+            componentsData.Clear();
             foreach (var model in data)
             {
-                if (model.Type == "Rectangle")
+                AddComponent(model.description, model.X, model.Y, model.id);
+                LoadComponentparam(model.id, model.Subs, model.Pubs);
+            }
+
+        }
+
+        public void LoadComponentparam(string id, List<string> Subs, List<string> Pubs)
+        {
+            var comp = ComponentManager.Instance.GetComponent(id);
+            if (comp != null)
+            {
+                foreach (var sub in Subs)
                 {
-                    var rect = new Control();////
-                    // AddComponent(rect, model.X, model.Y);
+                    comp.RegisterSubscriptions(sub);
+                }
+                foreach (var pub in Pubs)
+                {
+                    comp.RegisterPublisher(pub);
                 }
             }
+
         }
 
-        private class ComponentModel
-        {
-            public string Type { get; set; } = "";
-            public double X { get; set; }
-            public double Y { get; set; }
-        }
     }
 
-    public class ComponentEditor
+    public class ComponentModel
     {
+        public string id { get; set; } = "";
+        public string description { get; set; } = "";
+
+        public List<string> Subs { get; set; } = new List<string>();
+
+        public List<string> Pubs { get; set; } = new List<string>();
 
 
-
-
+        public double X { get; set; }
+        public double Y { get; set; }
     }
-
-
 
 
 }

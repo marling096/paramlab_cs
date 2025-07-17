@@ -49,13 +49,13 @@ namespace Editor
             hostCanvas.Children.Add(bottomleft);
             hostCanvas.Children.Add(bottomright);
 
-            Console.WriteLine("success");
+            // Console.WriteLine("success");
 
         }
 
-        public void updateThumbs(Grid target)
+        public void updateThumbs(Control target)
         {
-            Console.WriteLine("invoke");
+            // Console.WriteLine("invoke");
             var _target_left = Canvas.GetLeft(target);
             var _target_top = Canvas.GetTop(target);
 
@@ -78,7 +78,7 @@ namespace Editor
 
         private void OnDrag(object? sender, PointerEventArgs e)
         {
-            Console.WriteLine("Drag invoke");
+            // Console.WriteLine("Drag invoke");
             if (_dragging != null && e.GetCurrentPoint(_canvas).Properties.IsLeftButtonPressed)
             {
                 var pos = e.GetPosition(_canvas);

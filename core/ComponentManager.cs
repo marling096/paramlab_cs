@@ -25,9 +25,13 @@ namespace core
     public abstract class VisualComponentBase : IVisualComponent
     {
         protected Control? view;
-        protected Dictionary<string, Delegate> subscriptions = new();
-        protected Dictionary<string, string> Events = new();
+
         public abstract string Id { get; set; }
+
+        public abstract List<string> Subs { set; get; }
+
+        public abstract List<string> Pubs { set; get; }
+
         public abstract void Initialize();
         public abstract void Activate();
         public abstract void Deactivate();
@@ -49,16 +53,17 @@ namespace core
 
         protected abstract Control CreateParamView();
 
+
         protected void Subscribe<T>(string eventName, Action<T> handler)
         {
             EventHub.Instance.Subscribe(eventName, handler);
-            subscriptions[eventName] = handler;
+
         }
 
         protected void UnSubscribe<T>(string eventName, Action<T> handler)
         {
             EventHub.Instance.Unsubscribe(eventName, handler);
-            subscriptions.Remove(eventName);
+
         }
 
         protected void Publish<T>(string eventName, string data)
@@ -67,6 +72,7 @@ namespace core
 
         }
 
+
         public void Dispose()
         {
         }
@@ -74,7 +80,8 @@ namespace core
 
     public class ComponentManager
     {
-
+        private static readonly Lazy<ComponentManager> _instance = new(() => new ComponentManager());
+        public static ComponentManager Instance => _instance.Value;
         private Dictionary<string, VisualComponentBase> Components = new();
         private Dictionary<string, Type> ComponentTypes = new();
 
@@ -110,57 +117,29 @@ namespace core
             throw new ArgumentException($"Component with description '{Description}' not found.");
         }
 
-        public Control CreateParamPanel(string Description, string Id)
+        public Control CreateParamPanel(string Id)
         {
             var comp = Components[Id];
             if (comp != null)
             {
                 return comp.GetParamView();
             }
-            throw new ArgumentException($"Component with description '{Description}' not found.");
+            throw new ArgumentException($"Component with description '' not found.");
         }
 
-        public void Activate(string Description)
+
+        public Dictionary<string, Type> GetAllTypes() => ComponentTypes;
+
+        public VisualComponentBase? GetComponent(string id)
         {
-            if (Components.TryGetValue(Description, out var comp))
-                comp.Activate();
+            if (Components.TryGetValue(id, out var component))
+            {
+                return component;
+            }
+            return null;
         }
 
-        public void Deactivate(string Description)
-        {
-            if (Components.TryGetValue(Description, out var comp))
-                comp.Deactivate();
-        }
 
-        public Dictionary<string, Type> GetAll() => ComponentTypes;
-
-        public void AddComponentIn(string id, string subscription)
-        {
-            if (Components.TryGetValue(id, out var comp))
-            {
-                comp.RegisterSubscriptions(subscription);
-            }
-            else
-            {
-                throw new ArgumentException($"Component with id '{id}' not found.");
-            }
-
-
-        }
-
-        public void AddComponentOut(string id, string publisher)
-        {
-            if (Components.TryGetValue(id, out var comp))
-            {
-                comp.RegisterPublisher(publisher);
-            }
-            else
-            {
-                throw new ArgumentException($"Component with id '{id}' not found.");
-            }
-
-
-        }
     }
 }
 

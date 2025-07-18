@@ -128,7 +128,7 @@ namespace Editor
             ctrl.PointerPressed += RightPressed;
 
             DragResizeAdorner addone = new DragResizeAdorner();
-            addone.AttachThumbs(EditorCanvas, ctrl as Grid);
+            addone.AttachThumbs(EditorCanvas, ctrl);
 
 
         }

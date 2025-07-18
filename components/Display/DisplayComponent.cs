@@ -25,19 +25,22 @@ namespace components
         }
         public Control CreateComponentView()
         {
-            var grid = new Grid
-            {
-                Width = 200,
-                Height = 100,
-                Background = Brushes.Blue,
-            };
-            var canvas = new Canvas
-            {
-                Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 255))
-            };
-            grid.Children.Add(canvas);
-            return grid;
-
+            // var grid = new Grid
+            // {
+            //     Width = 200,
+            //     Height = 100,
+            //     Background = Brushes.Blue,
+            // };
+            // var canvas = new Canvas
+            // {
+            //     Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 255))
+            // };
+            // grid.Children.Add(canvas);
+            // return grid;
+            ComponentBody body = new ComponentBody();
+            var text = new TextBlock { Text = "动态添加的文本", Margin = new Thickness(0, 0, 0, 5) };
+            body.Context.Child = text;
+            return body.Body;
         }
 
         public Control CreateEditView(object param)

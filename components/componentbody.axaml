@@ -1,0 +1,48 @@
+<UserControl
+    x:Class="components.ComponentBody"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid
+        Name="Body"
+        Width="100"
+        Height="100">
+        <Border
+            Grid.RowSpan="2"
+            Background="Transparent"
+            BorderBrush="#1998ff"
+            BorderThickness="4"
+            CornerRadius="10"
+            ZIndex="-1">
+
+            <Canvas Background="Black" />
+
+        </Border>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Row="0">
+            <TextBlock
+                Margin="10"
+                HorizontalAlignment="Center"
+                Foreground="White">
+                Box 1
+            </TextBlock>
+
+        </Grid>
+        <Grid Name="GridContext" Row="1">
+            <Border
+                Name="Context"
+                Margin="10"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Background="Gainsboro"
+                BorderBrush="Black"
+                BorderThickness="2"
+                CornerRadius="3">
+                <!-- <TextBlock>Box 2</TextBlock> -->
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

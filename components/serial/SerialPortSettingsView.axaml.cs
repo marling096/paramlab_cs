@@ -5,8 +5,6 @@ namespace components
 {
     public partial class SerialPortSettingsView : UserControl
     {
-        private static readonly Lazy<SerialPortSettingsView> _instance = new(() => new SerialPortSettingsView());
-        public static SerialPortSettingsView Instance => _instance.Value;
         public SerialPortSettingsView()
         {
             Console.WriteLine("SerialPortSettingsView initialized");
@@ -22,9 +20,5 @@ namespace components
             }
         }
 
-        public Control GetView()
-        {
-            return this;
-        }
     }
 }

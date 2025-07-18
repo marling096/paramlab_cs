@@ -25,7 +25,7 @@ namespace Editor
         private Point _dragStart;
 
 
-        public void AttachThumbs(Canvas hostCanvas, Grid target)
+        public void AttachThumbs(Canvas hostCanvas, Control target)
         {
             topleft = new DragResizeThumbs();
             topright = new DragResizeThumbs();

@@ -25,7 +25,8 @@ namespace Editor
         public string Name { get; } = "Hot Key";
 
         public void Initialize(CanvasEditor editor)
-        {   Console.WriteLine("plugin init");
+        {
+            Console.WriteLine("plugin init");
             editor.Hotkey += (e) => OnKeyDownHandler(editor, e);
         }
 
@@ -44,6 +45,12 @@ namespace Editor
                 e.Handled = true;
                 editor.LoadFromFile?.Invoke();
             }
+
+            // if (e.Key == Key.Delete)
+            // {
+            //     e.Handled = true;
+            //     // editor.Delete?.Invoke();
+            // }
 
         }
 

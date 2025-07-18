@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -66,9 +67,9 @@ namespace components
     public class SerialComponent : VisualComponentBase
     {
 
-        public override List<string> Subs { set; get; } = new List<string>();
-
         public override List<string> Pubs { set; get; } = new List<string>();
+
+        public override Dictionary<string, List<Action<Object>>> Subs { set; get; } = new();
         private Lazy<SerialView> ComponentView = new Lazy<SerialView>();
 
         public SerialComponent(string id)
@@ -79,36 +80,41 @@ namespace components
         public static string Description { get; } = "串口";
         public override string Id { get; set; }
 
-        public override void Initialize()
+        public override void Mount()
         {
-            //初始化ui
-            RegisterSubscriptions("paramTest");
-            RegisterSubscriptions("paramTest1");
-            RegisterSubscriptions("paramTest2");
-            // RegisterPublisher("Test");
 
         }
 
-        public override void Activate()
+        public override void Unmount()
         {
-            //激活时可以做一些额外的事情
-        }
-
-        public override void Deactivate()
-        {
-            //停用时可以做一些清理工作
-
-        }
-
-        public override void RegisterSubscriptions(string? _eventName)
-        {
-            if (_eventName != null)
+            foreach (var sub in Subs)
             {
-                Subs.Add(_eventName);
-                Subscribe<string>(_eventName, OnEvent);
+                foreach (var handler in sub.Value)
+                {
+                    UnRegisterSubscriptions(sub.Key, handler);
+                }
+
             }
 
         }
+
+
+        public override void RegisterSubscriptions(string? _eventName, Action<Object> handler)
+        {
+            if (_eventName != null)
+            {
+                Subs[_eventName].Add(handler);
+                Subscribe<string>(_eventName, handler);
+
+            }
+
+        }
+        public override void UnRegisterSubscriptions(string _eventName, Action<Object> handler)
+        {
+
+            UnSubscribe<Object>(_eventName, handler);
+        }
+
 
         private void OnEvent(string data)
         {
@@ -120,16 +126,18 @@ namespace components
             }
         }
 
-        public override void RegisterPublisher(string? _eventName)
+        public override void RegisterPublisher(string? _eventName, object? message = null)
         {
-            //do nothing
+
             if (_eventName != null)
             {
                 Pubs.Add(_eventName);
-                Publish<string>(_eventName, "test success");
+                Publish<Object>(_eventName, message);
             }
         }
 
+
+        public override void UnRegisterPublisher(string? _eventName) { }
         protected override Control CreateParamView()
         {
             var dataContext = new

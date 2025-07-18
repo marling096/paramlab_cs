@@ -27,6 +27,7 @@ namespace Editor
 
         public void AttachThumbs(Canvas hostCanvas, Control target)
         {
+            _canvas = hostCanvas;
             topleft = new DragResizeThumbs();
             topright = new DragResizeThumbs();
             bottomleft = new DragResizeThumbs();
@@ -43,11 +44,11 @@ namespace Editor
             target.PointerReleased += OnDragEnd;
             target.PointerPressed += LeftPressed;
 
-            hostCanvas.Children.Add(target);
-            hostCanvas.Children.Add(topleft);
-            hostCanvas.Children.Add(topright);
-            hostCanvas.Children.Add(bottomleft);
-            hostCanvas.Children.Add(bottomright);
+            _canvas.Children.Add(target);
+            _canvas.Children.Add(topleft);
+            _canvas.Children.Add(topright);
+            _canvas.Children.Add(bottomleft);
+            _canvas.Children.Add(bottomright);
 
             // Console.WriteLine("success");
 
@@ -116,6 +117,21 @@ namespace Editor
                 }
             }
 
+        }
+
+        ~DragResizeAdorner()
+        {
+
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            Console.WriteLine("析构");
+            _canvas.Children.Remove(topleft);
+            _canvas.Children.Remove(topright);
+            _canvas.Children.Remove(bottomleft);
+            _canvas.Children.Remove(bottomright);
         }
 
     }

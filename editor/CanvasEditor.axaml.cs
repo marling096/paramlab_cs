@@ -37,9 +37,12 @@ namespace Editor
         public List<ComponentModel> componentsData = new List<ComponentModel>();
         public List<EditorPlugin> plugins = new List<EditorPlugin>();
 
+        public Dictionary<string, DragResizeAdorner> Adorners = new();
         public Dictionary<Control, string> components = new();//ctrl id
         public Dictionary<string, Control> _components = new();//id ctrl 
         public ContextMenu contextMenu = new ContextMenu();
+
+        public Control Current_ctrl = new Control();
         public double currentX = 0;
         public double currentY = 0;
 
@@ -49,6 +52,7 @@ namespace Editor
 
         public Action<KeyEventArgs> Hotkey;
 
+        public Action<string> Delete;
         public Action UnDo;
 
 
@@ -68,7 +72,7 @@ namespace Editor
             }
             InitializeComponent();
             EditorCanvas.PointerPressed += PointerPressedHandler;
-
+            Delete += RemoveComponent;
 
             win.KeyDown += OnKeyDownHandler;
 
@@ -90,10 +94,39 @@ namespace Editor
         private void OnKeyDownHandler(object? sender, KeyEventArgs e)
         {
             Hotkey?.Invoke(e);
+            if (e.Key == Key.Delete)
+            {
+                Delete?.Invoke(components[Current_ctrl]);
+            }
             Console.WriteLine("调用");
         }
         private void PointerPressedHandler(object? sender, PointerPressedEventArgs args)
         {
+            if (args.Source is Control clickedControl)
+            {
+                Console.WriteLine($"找到 sender控件: {sender.GetType().Name}");
+                var canvas = this.FindControl<Canvas>("EditorCanvas"); // 替换为你的 Canvas 名称
+                if (canvas == null) return;
+
+                Control? current = clickedControl;
+
+                // 一直向上查找，直到其 Parent 是 canvas 为止
+                while (current != null && current.GetVisualParent() is Control parent)
+                {
+                    if (parent == canvas)
+                    {
+                        // 找到 Canvas 的直接子控件
+                        Console.WriteLine($"找到 Canvas 子控件: {current.GetType().Name}, Name: {current.Name}");
+                        Console.WriteLine($"hash{current.GetHashCode()}");
+                        Current_ctrl = current;
+                        break;
+                    }
+
+                    current = parent;
+                }
+                
+            }
+
             var point = args.GetCurrentPoint(sender as Control);
             this.currentX = point.Position.X;
             this.currentY = point.Position.Y;
@@ -104,6 +137,8 @@ namespace Editor
             {
                 contextMenu.Open(EditorCanvas);
             }
+
+
         }
 
         public void AddComponent(string description, double x, double y, string? id = null)
@@ -129,8 +164,20 @@ namespace Editor
 
             DragResizeAdorner addone = new DragResizeAdorner();
             addone.AttachThumbs(EditorCanvas, ctrl);
+            Adorners[id] = addone;
 
+            Console.WriteLine($"添加控件: {ctrl.GetType().Name}, Name: {ctrl.Name}");
+            Console.WriteLine($"hash{ctrl.GetHashCode()}");
 
+        }
+
+        public void RemoveComponent(string id)
+        {
+            EditorCanvas.Children.Remove(_components[id]);
+            Adorners[id].Dispose();
+            var comp = ComponentManager.Instance.GetComponent(id);
+            comp = null;
+            Adorners.Remove(id);
         }
 
         private void RightPressed(object? sender, PointerPressedEventArgs e)
@@ -169,18 +216,22 @@ namespace Editor
 
         }
 
-        public void LoadComponentparam(string id, List<string> Subs, List<string> Pubs)
+        public void LoadComponentparam(string id, Dictionary<string, List<Action<Object>>> Subs, List<string> Pubs)
         {
             var comp = ComponentManager.Instance.GetComponent(id);
             if (comp != null)
             {
                 foreach (var sub in Subs)
                 {
-                    comp.RegisterSubscriptions(sub);
+                    foreach (var handler in sub.Value)
+                    {
+                        comp.RegisterSubscriptions(sub.Key, handler);
+                    }
+
                 }
                 foreach (var pub in Pubs)
                 {
-                    comp.RegisterPublisher(pub);
+                    comp.RegisterPublisher(pub, null);
                 }
             }
 
@@ -193,7 +244,7 @@ namespace Editor
         public string id { get; set; } = "";
         public string description { get; set; } = "";
 
-        public List<string> Subs { get; set; } = new List<string>();
+        public Dictionary<string, List<Action<Object>>> Subs { get; set; } = new();
 
         public List<string> Pubs { get; set; } = new List<string>();
 

@@ -124,7 +124,7 @@ namespace Editor
 
                     current = parent;
                 }
-                
+
             }
 
             var point = args.GetCurrentPoint(sender as Control);
@@ -216,17 +216,17 @@ namespace Editor
 
         }
 
-        public void LoadComponentparam(string id, Dictionary<string, List<Action<Object>>> Subs, List<string> Pubs)
+        public void LoadComponentparam(string id, List<string> Subs, List<string> Pubs)
         {
             var comp = ComponentManager.Instance.GetComponent(id);
             if (comp != null)
             {
                 foreach (var sub in Subs)
                 {
-                    foreach (var handler in sub.Value)
-                    {
-                        comp.RegisterSubscriptions(sub.Key, handler);
-                    }
+         
+                    
+                        comp.RegisterSubscriptions(sub , null);
+                    
 
                 }
                 foreach (var pub in Pubs)
@@ -244,7 +244,7 @@ namespace Editor
         public string id { get; set; } = "";
         public string description { get; set; } = "";
 
-        public Dictionary<string, List<Action<Object>>> Subs { get; set; } = new();
+        public List<string> Subs { get; set; } = new();
 
         public List<string> Pubs { get; set; } = new List<string>();
 

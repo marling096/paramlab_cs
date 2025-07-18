@@ -14,9 +14,9 @@ namespace core
         string Id { get; set; }
         void Mount();
         void Unmount();
-        void RegisterSubscriptions(string? _eventName, Action<Object> handler);
+        void RegisterSubscriptions(string? _eventName, Action<Object>? handler);
 
-        void UnRegisterSubscriptions(string? _eventName, Action<Object> handler);
+        void UnRegisterSubscriptions(string? _eventName, Action<Object>? handler);
 
         void RegisterPublisher(string? eventName, object? message = null);
         void UnRegisterPublisher(string? eventName);
@@ -33,14 +33,14 @@ namespace core
 
         public abstract List<string> Pubs { set; get; }
 
-        public abstract Dictionary<string, List<Action<Object>>> Subs { set; get; }
+        public abstract List<string> Subs { set; get; }
 
         public abstract void Mount();
         public abstract void Unmount();
 
-        public abstract void RegisterSubscriptions(string? _eventName, Action<Object> handler);
+        public abstract void RegisterSubscriptions(string? _eventName, Action<Object>? handler);
 
-        public abstract void UnRegisterSubscriptions(string? _eventName, Action<Object> handler);
+        public abstract void UnRegisterSubscriptions(string? _eventName, Action<Object>? handler);
 
         public abstract void RegisterPublisher(string? eventName, object? message = null);
 

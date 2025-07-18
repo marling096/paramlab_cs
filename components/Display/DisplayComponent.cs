@@ -74,8 +74,9 @@ namespace components
 
 
         public override List<string> Pubs { set; get; } = new List<string>();
+        public override List<string> Subs { set; get; } = new List<string>();
 
-        public override Dictionary<string, List<Action<Object>>> Subs { set; get; } = new();
+        private Dictionary<string, List<Action<Object>>> Sub_handler = new();
         private Lazy<DisplayView> ComponentView = new Lazy<DisplayView>();
 
         public DisplayComponent(string id)
@@ -93,7 +94,7 @@ namespace components
 
         public override void Unmount()
         {
-            foreach (var sub in Subs)
+            foreach (var sub in Sub_handler)
             {
                 foreach (var handler in sub.Value)
                 {
@@ -101,28 +102,32 @@ namespace components
                 }
 
             }
-            
+
         }
 
 
-        public override void RegisterSubscriptions(string? _eventName, Action<Object> handler)
+        public override void RegisterSubscriptions(string? _eventName, Action<Object>? handler)
         {
             if (_eventName != null)
             {
-                Subs[_eventName].Add(handler);
-                Subscribe<string>(_eventName, handler);
+                Subs.Add(_eventName);
+                if (handler != null)
+                    Sub_handler[_eventName].Add(handler);
 
+                Subscribe<Object>(_eventName, OnEvent);
             }
 
         }
-        public override void UnRegisterSubscriptions(string? _eventName, Action<Object> handler)
+        public override void UnRegisterSubscriptions(string? _eventName, Action<Object>? handler)
         {
-            Subs[_eventName].Remove(handler);
-            UnSubscribe<Object>(_eventName, handler);
+            Subs.Remove(_eventName);
+            if (handler != null)
+                Sub_handler[_eventName].Remove(handler);
+            UnSubscribe<Object>(_eventName, OnEvent);
         }
 
 
-        private void OnEvent(string data)
+        private void OnEvent(Object data)
         {
             //show data
             Console.WriteLine($"Event received: {data}");

@@ -67,7 +67,9 @@ namespace components
     {
         public override List<string> Pubs { set; get; } = new List<string>();
 
-        public override Dictionary<string, List<Action<Object>>>  Subs { set; get; } = new();
+        public override List<string> Subs { set; get; } = new List<string>();
+
+        private Dictionary<string, List<Action<Object>>> Sub_handler = new();
         private Lazy<OpencvView> ComponentView = new Lazy<OpencvView>();
 
         public OpencvComponent(string id)
@@ -85,7 +87,7 @@ namespace components
 
         public override void Unmount()
         {
-            foreach (var sub in Subs)
+            foreach (var sub in Sub_handler)
             {
                 foreach (var handler in sub.Value)
                 {
@@ -93,7 +95,7 @@ namespace components
                 }
 
             }
-            
+
         }
 
 
@@ -101,15 +103,16 @@ namespace components
         {
             if (_eventName != null)
             {
-                Subs[_eventName].Add(handler);
-                Subscribe<string>(_eventName, handler);
-
+                Subs.Add(_eventName);
+                Sub_handler[_eventName].Add(handler);
+                Subscribe<string>(_eventName, OnEvent);
             }
 
         }
-        public override void UnRegisterSubscriptions(string _eventName, Action<Object> handler)
+        public override void UnRegisterSubscriptions(string? _eventName, Action<Object> handler)
         {
-
+            Subs.Remove(_eventName);
+            Sub_handler[_eventName].Remove(handler);
             UnSubscribe<Object>(_eventName, handler);
         }
 

@@ -1,27 +1,52 @@
 using System;
+using System.IO;
 using System.Timers;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media.Imaging;
 using core;
 using Editor;
 namespace paramlab_cs;
 
 public partial class MainWindow : Window
 {
+    public bool _forceClose = false;
+    CanvasEditor editor { set; get; }
     public MainWindow()
     {
         InitializeComponent();
+        this.Closed += OnMainWindowClosed;
 
         ComponentManager.Instance.RegisterBase("components");
-        var editor = new CanvasEditor(this);
+        editor = new CanvasEditor(this);
         editor.AddPlugin(new HotKey());
         editor.AddPlugin(new Filemanager());
         MainGrid.Children.Add(editor);
-                var task = new ScheduledTask(500, () =>
+        var task = new ScheduledTask(500, () =>
+{
+    string imagePath = "1.png";
+    if (File.Exists(imagePath))
+    {
+        var bitmap = new Bitmap(imagePath);
+        EventHub.Instance.Publish("paramTest", bitmap);
+    }
+
+});
+
+
+    }
+
+
+    private void OnMainWindowClosed(object? sender, EventArgs e)
+    {
+        _forceClose = true;
+
+        // 彻底关闭应用程序
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // EventHub.Instance.Publish("paramTest", "fetch subs");
-        });
-
-
+            desktop.Shutdown();
+        }
     }
 
 

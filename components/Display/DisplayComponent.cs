@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.PropertyGrid.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using core;
 
@@ -15,70 +18,17 @@ namespace components
 {
 
 
-
-
-    public class DisplayView : Control
-    {
-
-        public DisplayView()
-        {
-        }
-        public Control CreateComponentView()
-        {
-            // var grid = new Grid
-            // {
-            //     Width = 200,
-            //     Height = 100,
-            //     Background = Brushes.Blue,
-            // };
-            // var canvas = new Canvas
-            // {
-            //     Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 255))
-            // };
-            // grid.Children.Add(canvas);
-            // return grid;
-            ComponentBody body = new ComponentBody();
-            var text = new TextBlock { Text = "动态添加的文本", Margin = new Thickness(0, 0, 0, 5) };
-            body.Context.Child = text;
-            return body.Body;
-        }
-
-        public Control CreateEditView(object param)
-        {
-            var win = new Window
-            {
-                Width = 500,
-                Height = 300,
-                Title = "组件编辑",
-                CornerRadius = new CornerRadius(1),
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                SystemDecorations = SystemDecorations.Full, // 有边框与标题栏
-                CanResize = true
-            };
-            var propertyGrid = new PropertyGrid
-            {
-                BorderThickness = new Thickness(1),
-                Background = Brushes.Black,
-                CornerRadius = new CornerRadius(0.5),
-                Margin = new Thickness(1),
-                DataContext = param,
-            };
-            win.Content = propertyGrid;
-            return win;
-        }
-
-    }
-
     public class DisplayComponent : VisualComponentBase
     {
 
 
         public override List<string> Pubs { set; get; } = new List<string>();
         public override List<string> Subs { set; get; } = new List<string>();
-
         private Dictionary<string, List<Action<Object>>> Sub_handler = new();
-        private Lazy<DisplayView> ComponentView = new Lazy<DisplayView>();
 
+        public ComponentBody Body = new ComponentBody();
+
+        public ComponentEdit Edit = new ComponentEdit();
         public DisplayComponent(string id)
         {
             Id = id;
@@ -89,7 +39,7 @@ namespace components
 
         public override void Mount()
         {
-
+            // AddSubscribe("paramTest", ReceiveDataEvent);
         }
 
         public override void Unmount()
@@ -98,7 +48,7 @@ namespace components
             {
                 foreach (var handler in sub.Value)
                 {
-                    UnRegisterSubscriptions(sub.Key, handler);
+                    DeleteSubscribe(sub.Key, handler);
                 }
 
             }
@@ -106,38 +56,84 @@ namespace components
         }
 
 
-        public override void RegisterSubscriptions(string? _eventName, Action<Object>? handler)
+        public override void AddSubscribe(string? _eventName, Action<Object>? handler)
         {
-            if (_eventName != null)
+            if (_eventName != null && _eventName != "" && !Subs.Contains(_eventName))
             {
-                Subs.Add(_eventName);
-                if (handler != null)
-                    Sub_handler[_eventName].Add(handler);
+                Console.WriteLine($"添加话题 {_eventName}");
+                if (!Subs.Contains(_eventName))
+                {
+                    Subs.Add(_eventName);
+                    Sub_handler.Add(_eventName, new List<Action<Object>>());
+                    if (handler != null)
 
-                Subscribe<Object>(_eventName, OnEvent);
+                        Sub_handler[_eventName].Add(handler);
+                    else
+                    {
+                        Sub_handler[_eventName].Add(ReceiveDataEvent);
+                    }
+                    Subscribe<Object>(_eventName, ReceiveDataEvent);
+                }
+                else
+                {
+                    if (handler != null)
+
+                        Sub_handler[_eventName].Add(handler);
+                    else
+                    {
+                        Sub_handler[_eventName].Add(ReceiveDataEvent);
+                    }
+                }
+
+
             }
 
         }
-        public override void UnRegisterSubscriptions(string? _eventName, Action<Object>? handler)
+        public override void DeleteSubscribe(string? _eventName, Action<Object>? handler)
         {
-            Subs.Remove(_eventName);
-            if (handler != null)
-                Sub_handler[_eventName].Remove(handler);
-            UnSubscribe<Object>(_eventName, OnEvent);
+            if (_eventName != null && _eventName != "")
+            {
+                if (Subs.Contains(_eventName))
+                {
+                    Subs.Remove(_eventName);
+                    if (handler != null)
+                        Sub_handler[_eventName].Remove(handler);
+                    else
+                    {
+                        Sub_handler[_eventName].Remove(ReceiveDataEvent);
+                    }
+                    UnSubscribe<Object>(_eventName, ReceiveDataEvent);
+
+                }
+            }
+
         }
 
 
-        private void OnEvent(Object data)
+        private void ReceiveDataEvent(Object data)
         {
-            //show data
-            Console.WriteLine($"Event received: {data}");
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (data is string str)
+                {
+                    var text = new TextBlock { Text = str, Margin = new Thickness(0, 0, 0, 5) };
+                    Body.Context.Child = text;
+                    Console.WriteLine("是自定义类型: ");
+                }
+
+                if (data is Bitmap bitmap)
+                {
+                    var img = new Image { Source = bitmap };
+                    Body.Context.Child = img;
+                }
+            });
             foreach (var sub in Subs)
             {
                 Console.WriteLine($"Subscribed to {sub}");
             }
         }
 
-        public override void RegisterPublisher(string? _eventName, object? message = null)
+        public override void AddPublisher(string? _eventName, object? message = null)
         {
 
             if (_eventName != null)
@@ -146,21 +142,39 @@ namespace components
                 Publish<Object>(_eventName, message);
             }
         }
-        public override void UnRegisterPublisher(string? _eventName) { }
+        public override void DeletePublisher(string? _eventName) { }
+
+        private bool _isBound = false;
         protected override Control CreateParamView()
         {
-            var dataContext = new
+            if (!_isBound)
             {
-                subs = Subs,
-                pubs = Pubs
-            };
+                Edit.Bind_SubAction((topic) =>
+                {
+                    AddSubscribe(topic, null);
+                }, (topic) =>
+                {
+                    DeleteSubscribe(topic, null);
+                });
+                Edit.Bind_PubAction((topic) =>
+                {
+                    AddPublisher(topic, null);
+                }, (topic) =>
+                {
+                    DeletePublisher(topic);
+                });
+                _isBound = true;
+            }
 
-            return ComponentView.Value.CreateEditView(dataContext);
+            return Edit;
 
         }
+
         protected override Control CreateView()
         {
-            return ComponentView.Value.CreateComponentView();
+
+
+            return Body.Body;
         }
     }
 

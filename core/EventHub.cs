@@ -3,6 +3,12 @@ using System.Collections.Generic;
 
 namespace core
 {
+    public class message
+    {
+        string data_type;
+
+
+    }
     public class EventHub
     {
         private static readonly Lazy<EventHub> _instance = new(() => new EventHub());
@@ -69,6 +75,7 @@ namespace core
             }
 
         }
+
 
     }
 

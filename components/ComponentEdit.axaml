@@ -1,0 +1,16 @@
+<Window
+    x:Class="components.ComponentEdit"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:apc="clr-namespace:Avalonia.PropertyGrid.Controls;assembly=Avalonia.PropertyGrid"
+    xmlns:local="clr-namespace:components"
+    x:DataType="local:ComponentEdit"
+    Title="组件编辑"
+    Width="500"
+    Height="300"
+    CanResize="true"
+    CornerRadius="1"
+    Focusable="True"
+    SystemDecorations="Full">
+
+</Window>

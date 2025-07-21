@@ -14,12 +14,12 @@ namespace core
         string Id { get; set; }
         void Mount();
         void Unmount();
-        void RegisterSubscriptions(string? _eventName, Action<Object>? handler);
+        void AddSubscribe(string? _eventName, Action<Object>? handler);
 
-        void UnRegisterSubscriptions(string? _eventName, Action<Object>? handler);
+        void DeleteSubscribe(string? _eventName, Action<Object>? handler);
 
-        void RegisterPublisher(string? eventName, object? message = null);
-        void UnRegisterPublisher(string? eventName);
+        void AddPublisher(string? eventName, object? message = null);
+        void DeletePublisher(string? eventName);
 
         Control GetView(); // Avalonia 控件
     }
@@ -38,13 +38,13 @@ namespace core
         public abstract void Mount();
         public abstract void Unmount();
 
-        public abstract void RegisterSubscriptions(string? _eventName, Action<Object>? handler);
+        public abstract void AddSubscribe(string? _eventName, Action<Object>? handler);
 
-        public abstract void UnRegisterSubscriptions(string? _eventName, Action<Object>? handler);
+        public abstract void DeleteSubscribe(string? _eventName, Action<Object>? handler);
 
-        public abstract void RegisterPublisher(string? eventName, object? message = null);
+        public abstract void AddPublisher(string? eventName, object? message = null);
 
-        public abstract void UnRegisterPublisher(string? eventName);
+        public abstract void DeletePublisher(string? eventName);
 
         public virtual Control GetView()
         {
@@ -111,11 +111,18 @@ namespace core
             ComponentTypes = types.ToDictionary(t => t.GetProperty("Description")?.GetValue(null) as string ??
                 throw new ArgumentException($"Component {t.Name} does not have a static Description property."),
                                                   t => t);
-            Console.WriteLine("Registered base components:");
+            Console.WriteLine("Added base components:");
             foreach (var component in ComponentTypes)
             {
                 Console.WriteLine($" - {component.Key}");
             }
+        }
+
+        public void DisposComponent(string id)
+        {
+            var comp = Components[id];
+            comp.Unmount();
+            comp = null;
         }
         //
         public Control CreateFromBase(string Description, string Id)
@@ -148,6 +155,31 @@ namespace core
 
         }
 
+        public void Component_AddSubscribe(string id, string topic)
+        {
+            if (Components.TryGetValue(id, out var component))
+            {
+                component.AddSubscribe(topic, null);
+            }
+            else
+            {
+                throw new ArgumentException($"component not found.");
+            }
+
+        }
+
+        public void Component_AddPublisher(string id, string topic)
+        {
+            if (Components.TryGetValue(id, out var component))
+            {
+                component.AddPublisher(topic, null);
+            }
+            else
+            {
+                throw new ArgumentException($"component not found.");
+            }
+
+        }
         public Dictionary<string, Type> GetAllTypes() => ComponentTypes;
 
         public VisualComponentBase? GetComponent(string id)

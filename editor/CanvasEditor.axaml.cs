@@ -34,6 +34,8 @@ namespace Editor
 
     public partial class CanvasEditor : UserControl
     {
+
+        public MainWindow owner { set; get; }
         public List<ComponentModel> componentsData = new List<ComponentModel>();
         public List<EditorPlugin> plugins = new List<EditorPlugin>();
 
@@ -73,8 +75,8 @@ namespace Editor
             InitializeComponent();
             EditorCanvas.PointerPressed += PointerPressedHandler;
             Delete += RemoveComponent;
-
-            win.KeyDown += OnKeyDownHandler;
+            owner = win;
+            owner.KeyDown += OnKeyDownHandler;
 
 
         }
@@ -104,7 +106,7 @@ namespace Editor
         {
             if (args.Source is Control clickedControl)
             {
-                Console.WriteLine($"找到 sender控件: {sender.GetType().Name}");
+                // Console.WriteLine($"找到 sender控件: {sender.GetType().Name}");
                 var canvas = this.FindControl<Canvas>("EditorCanvas"); // 替换为你的 Canvas 名称
                 if (canvas == null) return;
 
@@ -116,8 +118,8 @@ namespace Editor
                     if (parent == canvas)
                     {
                         // 找到 Canvas 的直接子控件
-                        Console.WriteLine($"找到 Canvas 子控件: {current.GetType().Name}, Name: {current.Name}");
-                        Console.WriteLine($"hash{current.GetHashCode()}");
+                        // Console.WriteLine($"找到 Canvas 子控件: {current.GetType().Name}, Name: {current.Name}");
+                        // Console.WriteLine($"hash{current.GetHashCode()}");
                         Current_ctrl = current;
                         break;
                     }
@@ -137,7 +139,6 @@ namespace Editor
             {
                 contextMenu.Open(EditorCanvas);
             }
-
 
         }
 
@@ -175,8 +176,7 @@ namespace Editor
         {
             EditorCanvas.Children.Remove(_components[id]);
             Adorners[id].Dispose();
-            var comp = ComponentManager.Instance.GetComponent(id);
-            comp = null;
+            ComponentManager.Instance.DisposComponent(id);
             Adorners.Remove(id);
         }
 
@@ -192,10 +192,16 @@ namespace Editor
                     var pal = ComponentManager.Instance.CreateParamPanel(id);
                     if (pal is Window win)
                     {
-                        var mainWindow = Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                                ? desktop.MainWindow : null;
+                        win.Closing += (sender, e) =>
+                        {
+                            if (!owner._forceClose)
+                            {
+                                e.Cancel = true;                 // 取消默认关闭行为
+                                win.Hide();            // 改为隐藏窗口
+                            }
 
-                        win.Show(mainWindow);
+                        };
+                        win.Show(owner);
                     }
                 }
 
@@ -223,15 +229,11 @@ namespace Editor
             {
                 foreach (var sub in Subs)
                 {
-         
-                    
-                        comp.RegisterSubscriptions(sub , null);
-                    
-
+                    comp.AddSubscribe(sub, null);
                 }
                 foreach (var pub in Pubs)
                 {
-                    comp.RegisterPublisher(pub, null);
+                    comp.AddPublisher(pub, null);
                 }
             }
 

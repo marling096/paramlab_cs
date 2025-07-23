@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Layout;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -100,47 +101,48 @@ namespace Editor
             {
                 Delete?.Invoke(components[Current_ctrl]);
             }
-            Console.WriteLine("调用");
         }
         private void PointerPressedHandler(object? sender, PointerPressedEventArgs args)
         {
             if (args.Source is Control clickedControl)
             {
-                // Console.WriteLine($"找到 sender控件: {sender.GetType().Name}");
-                var canvas = this.FindControl<Canvas>("EditorCanvas"); // 替换为你的 Canvas 名称
+                var canvas = this.FindControl<Canvas>("EditorCanvas");
                 if (canvas == null) return;
 
                 Control? current = clickedControl;
 
-                // 一直向上查找，直到其 Parent 是 canvas 为止
                 while (current != null && current.GetVisualParent() is Control parent)
                 {
-                    if (parent == canvas)
+                    var grandParent = parent.GetVisualParent();
+
+                    if (grandParent == canvas)
                     {
-                        // 找到 Canvas 的直接子控件
-                        // Console.WriteLine($"找到 Canvas 子控件: {current.GetType().Name}, Name: {current.Name}");
-                        // Console.WriteLine($"hash{current.GetHashCode()}");
+                        // 找到 Canvas 的直接子控件的子控件（即孙子节点）
                         Current_ctrl = current;
+                        // Console.WriteLine($"找到 Canvas 子控件: {Current_ctrl.GetType().Name}, Name: {Current_ctrl.Name}");
+                        // Console.WriteLine($"hash{Current_ctrl.GetHashCode()}");
                         break;
                     }
-
                     current = parent;
                 }
-
             }
 
             var point = args.GetCurrentPoint(sender as Control);
             this.currentX = point.Position.X;
             this.currentY = point.Position.Y;
+
             if (point.Properties.IsLeftButtonPressed)
             {
+                // ...
             }
             if (point.Properties.IsRightButtonPressed)
             {
                 contextMenu.Open(EditorCanvas);
             }
 
+
         }
+
 
         public void AddComponent(string description, double x, double y, string? id = null)
         {
@@ -158,23 +160,17 @@ namespace Editor
                 X = x,
                 Y = y
             });
-
-            Canvas.SetLeft(ctrl, x);
-            Canvas.SetTop(ctrl, y);
             ctrl.PointerPressed += RightPressed;
-
             DragResizeAdorner addone = new DragResizeAdorner();
-            addone.AttachThumbs(EditorCanvas, ctrl);
+            addone.AttachThumbs(EditorCanvas, ctrl, x, y);
             Adorners[id] = addone;
-
-            Console.WriteLine($"添加控件: {ctrl.GetType().Name}, Name: {ctrl.Name}");
-            Console.WriteLine($"hash{ctrl.GetHashCode()}");
 
         }
 
         public void RemoveComponent(string id)
         {
-            EditorCanvas.Children.Remove(_components[id]);
+            var parent = _components[id].GetVisualParent() as Control;
+            EditorCanvas.Children.Remove(parent);
             Adorners[id].Dispose();
             ComponentManager.Instance.DisposComponent(id);
             Adorners.Remove(id);

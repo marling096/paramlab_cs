@@ -6,12 +6,12 @@ namespace components;
 
 public partial class OpenCvModelView : UserControl
 {
-    private static readonly Lazy<OpenCvModelView> _instance = new(() => new OpenCvModelView());
-    public static OpenCvModelView Instance => _instance.Value;
     public OpenCvModelView()
     {
         InitializeComponent();
-        this.DataContext = new OpencvModelViewModel();
+        if (this.DataContext == null)
+            this.DataContext = new OpencvModelViewModel();
+
         SourceComboBox.DropDownOpened += Source_ComboBox_DropDownOpened;
     }
 
@@ -33,10 +33,5 @@ public partial class OpenCvModelView : UserControl
             if (offsetY > img.Bounds.Height - 24) offsetY = img.Bounds.Height - 24;
             vm.OnImageClicked(new Avalonia.Point(offsetX, offsetY), img.Bounds.Width, img.Bounds.Height);
         }
-    }
-
-    public Control GetView()
-    {
-        return this;
     }
 }

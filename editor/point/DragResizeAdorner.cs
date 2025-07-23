@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Layout;
 
 namespace Editor
 {
@@ -25,7 +26,7 @@ namespace Editor
         private Point _dragStart;
 
 
-        public void AttachThumbs(Canvas hostCanvas, Control target)
+        public void AttachThumbs(Canvas hostCanvas, Control target, Double x, Double y)
         {
             _canvas = hostCanvas;
             topleft = new DragResizeThumbs();
@@ -33,18 +34,30 @@ namespace Editor
             bottomleft = new DragResizeThumbs();
             bottomright = new DragResizeThumbs();
 
-            thumbsevent += () => updateThumbs(target);
+            _target = new Grid
+            {
+                Width = 200,
+                Height = 300,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+            };
 
-            topleft.AttachTo(Guid.NewGuid().ToString(), "topleft", target, thumbsevent);
-            topright.AttachTo(Guid.NewGuid().ToString(), "topright", target, thumbsevent);
-            bottomleft.AttachTo(Guid.NewGuid().ToString(), "bottomleft", target, thumbsevent);
-            bottomright.AttachTo(Guid.NewGuid().ToString(), "bottomright", target, thumbsevent);
+            _target.Children.Add(target);
+            Canvas.SetLeft(_target, x);
+            Canvas.SetTop(_target, y);
 
-            target.PointerMoved += OnDrag;
-            target.PointerReleased += OnDragEnd;
-            target.PointerPressed += LeftPressed;
+            thumbsevent += () => updateThumbs(_target);
 
-            _canvas.Children.Add(target);
+            topleft.AttachTo(Guid.NewGuid().ToString(), "topleft", _target, thumbsevent);
+            topright.AttachTo(Guid.NewGuid().ToString(), "topright", _target, thumbsevent);
+            bottomleft.AttachTo(Guid.NewGuid().ToString(), "bottomleft", _target, thumbsevent);
+            bottomright.AttachTo(Guid.NewGuid().ToString(), "bottomright", _target, thumbsevent);
+
+            _target.PointerMoved += OnDrag;
+            _target.PointerReleased += OnDragEnd;
+            _target.PointerPressed += LeftPressed;
+
+            _canvas.Children.Add(_target);
             _canvas.Children.Add(topleft);
             _canvas.Children.Add(topright);
             _canvas.Children.Add(bottomleft);
@@ -136,3 +149,4 @@ namespace Editor
 
     }
 }
+

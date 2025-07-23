@@ -3,7 +3,8 @@
   xmlns="https://github.com/avaloniaui"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:vm="clr-namespace:components"
-  x:DataType="vm:OpencvModelViewModel">
+  x:DataType="vm:OpencvModelViewModel"
+  Background="LightGreen">
   <UserControl.Resources>
     <vm:BoolToBrushConverter
       x:Key="BoolToBrushConverter"
@@ -15,7 +16,11 @@
       TrueBrush="LightSkyBlue" />
     <vm:OriginalButtonBrushConverter x:Key="OriginalButtonBrushConverter" />
   </UserControl.Resources>
-  <Grid>
+  <Grid
+    Name="OpencvGrid"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch"
+    Background="Black">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="3*" />
@@ -64,6 +69,8 @@
       <Grid>
         <Image
           x:Name="CameraImage"
+          MinWidth="100"
+          MinHeight="100"
           HorizontalAlignment="Center"
           VerticalAlignment="Center"
           PointerPressed="CameraImage_PointerPressed"
@@ -86,18 +93,28 @@
       Margin="10,0,10,10"
       Background="Black"
       CornerRadius="8">
-      <StackPanel Orientation="Vertical" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="8">
+      <StackPanel
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"
+        Orientation="Vertical"
+        Spacing="8">
         <StackPanel Orientation="Horizontal" Spacing="16">
           <CheckBox
             MinWidth="80"
             Content="Canny"
             IsChecked="{Binding IsCannyEnabled, Mode=TwoWay}" />
-          <TextBlock Text="阈值1:" VerticalAlignment="Center" Margin="8,0,0,0" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="阈值1:" />
           <TextBox
             Width="60"
             Text="{Binding CannyThreshold1, Mode=TwoWay}"
             Watermark="100" />
-          <TextBlock Text="阈值2:" VerticalAlignment="Center" Margin="8,0,0,0" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="阈值2:" />
           <TextBox
             Width="60"
             Text="{Binding CannyThreshold2, Mode=TwoWay}"
@@ -108,10 +125,22 @@
             MinWidth="100"
             Content="色彩追踪"
             IsChecked="{Binding IsColorTrackEnabled, Mode=TwoWay}" />
-          <TextBlock Text="上限色:" VerticalAlignment="Center" Margin="8,0,0,0" />
-          <TextBox Width="80" Text="{Binding ColorTrackUp, Mode=TwoWay}" Watermark="#FF0000" />
-          <TextBlock Text="下限色:" VerticalAlignment="Center" Margin="8,0,0,0" />
-          <TextBox Width="80" Text="{Binding ColorTrackDown, Mode=TwoWay}" Watermark="#00FF00" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="上限色:" />
+          <TextBox
+            Width="80"
+            Text="{Binding ColorTrackUp, Mode=TwoWay}"
+            Watermark="#FF0000" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="下限色:" />
+          <TextBox
+            Width="80"
+            Text="{Binding ColorTrackDown, Mode=TwoWay}"
+            Watermark="#00FF00" />
         </StackPanel>
       </StackPanel>
     </Border>

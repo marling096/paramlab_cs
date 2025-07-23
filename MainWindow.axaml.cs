@@ -29,7 +29,8 @@ public partial class MainWindow : Window
     if (File.Exists(imagePath))
     {
         var bitmap = new Bitmap(imagePath);
-        EventHub.Instance.Publish("paramTest", bitmap);
+        // EventHub.Instance.Publish("paramTest", bitmap);
+        // EventHub.Instance.Publish("paramTest", "Hello, world!");
     }
 
 });

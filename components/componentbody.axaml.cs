@@ -33,11 +33,25 @@ namespace components
 
         }
 
-        public Control GetComponentBody()
+        public void SetTitle(string title)
         {
 
-            return this;
+            this.FindControl<TextBlock>("Component_title").Text = title ??
+            throw new ArgumentNullException(nameof(title), "Title cannot be null");
         }
+
+        public void AddContnet(Control ctrl)
+        {
+            var border = this.FindControl<Border>("Context");
+            if (border == null)
+            {
+                Console.WriteLine("⚠️ 未找到名为 'Context' 的 Border");
+                return;
+            }
+            border.Child = ctrl ?? throw new ArgumentNullException(nameof(ctrl));
+
+        }
+
     }
 
 

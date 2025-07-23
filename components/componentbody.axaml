@@ -1,11 +1,12 @@
 <UserControl
     x:Class="components.ComponentBody"
     xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:components="clr-namespace:components">
     <Grid
         Name="Body"
-        Width="100"
-        Height="100">
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch">
         <Border
             Grid.RowSpan="2"
             Background="Transparent"
@@ -24,11 +25,10 @@
 
         <Grid Row="0">
             <TextBlock
+                Name="Component_title"
                 Margin="10"
                 HorizontalAlignment="Center"
-                Foreground="White">
-                Box 1
-            </TextBlock>
+                Foreground="White" />
 
         </Grid>
         <Grid Name="GridContext" Row="1">
@@ -40,9 +40,7 @@
                 Background="Gainsboro"
                 BorderBrush="Black"
                 BorderThickness="2"
-                CornerRadius="3">
-                <!-- <TextBlock>Box 2</TextBlock> -->
-            </Border>
+                CornerRadius="3" />
         </Grid>
     </Grid>
 </UserControl>

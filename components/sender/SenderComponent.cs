@@ -7,18 +7,20 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.PropertyGrid.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using core;
+using OpenCvSharp;
 
 namespace components
 {
 
 
-    public class DisplayComponent : VisualComponentBase
+    public class SenderComponent : VisualComponentBase
     {
 
 
@@ -29,12 +31,12 @@ namespace components
         public ComponentBody Body = new ComponentBody();
 
         public ComponentEdit Edit = new ComponentEdit();
-        public DisplayComponent(string id)
+        public SenderComponent(string id)
         {
             Id = id;
         }
 
-        public static string Description { get; } = "显示器";
+        public static string Description { get; } = "发送器";
         public override string Id { get; set; }
 
         public override void Mount()
@@ -114,18 +116,7 @@ namespace components
         {
             Dispatcher.UIThread.Post(() =>
             {
-                if (data is string str)
-                {
-                    var text = new TextBlock { Text = str, Margin = new Thickness(0, 0, 0, 5) };
-                    Body.Context.Child = text;
-                    Console.WriteLine("是自定义类型: ");
-                }
 
-                if (data is Bitmap bitmap)
-                {
-                    var img = new Image { Source = bitmap };
-                    Body.Context.Child = img;
-                }
             });
             foreach (var sub in Subs)
             {
@@ -173,7 +164,19 @@ namespace components
         protected override Control CreateView()
         {
 
+            Console.WriteLine("添加元素");
+            Body.SetTitle("Sender");
 
+            var panel = new SenderView(input =>
+            {
+                Console.WriteLine("你输入了：" + input);
+                foreach (var pub in Pubs)
+                { 
+                    Publish<Object>(pub, input);
+                }
+            });
+
+            Body.AddContnet(panel);
             return Body;
         }
     }

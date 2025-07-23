@@ -38,8 +38,8 @@ namespace Editor
             {
                 Width = 200,
                 Height = 300,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
+                // HorizontalAlignment = HorizontalAlignment.Stretch,
+                // VerticalAlignment = VerticalAlignment.Stretch,
             };
 
             _target.Children.Add(target);

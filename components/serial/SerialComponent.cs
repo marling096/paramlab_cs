@@ -161,14 +161,8 @@ namespace components
         protected override Control CreateView()
         {
             SerialPortSettingsView SerialView = new SerialPortSettingsView();
-            var grid = new Grid
-            {
-                Width = 237,
-                Height = 539
-            };
 
-            grid.Children.Add(SerialView);
-            return grid;
+            return SerialView;
 
         }
     }

@@ -13,7 +13,7 @@
   </UserControl.DataContext>
 
   <Grid
-    Name="SerialBorder"
+    Name="SerialGrid"
 >
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />

@@ -163,19 +163,9 @@ namespace components
         protected override Control CreateView()
         {
 
-            var grid = new Grid
-            {
-                Width = 300,
-                Height = 500,
+            var view = new OpenCvModelView();
 
-            };
-
-            var view = new OpenCvModelView()
-            {
-
-            };
-            grid.Children.Add(view);
-            return grid;
+            return view;
         }
     }
 

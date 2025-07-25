@@ -29,6 +29,7 @@ namespace components
 
         public ComponentBody Comp_Body = new ComponentBody();
 
+        public OpenCvModelView OpencvView { set; get;  }
         public ComponentEdit Edit = new ComponentEdit();
         public OpencvComponent(string id)
         {
@@ -53,7 +54,7 @@ namespace components
                 }
 
             }
-
+            OpencvView = null;
         }
 
 
@@ -163,9 +164,9 @@ namespace components
         protected override Control CreateView()
         {
 
-            var view = new OpenCvModelView();
+            OpencvView= new OpenCvModelView();
 
-            return view;
+            return OpencvView;
         }
     }
 

@@ -14,7 +14,7 @@
         Spacing="6">
         <TextBox
             Width="100"
-            Margin="10"
+            Margin="5"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Center"
             Text="{Binding InputText, Mode=TwoWay}" />

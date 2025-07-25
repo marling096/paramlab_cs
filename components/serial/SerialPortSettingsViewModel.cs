@@ -198,6 +198,7 @@ namespace components
 
         public void RefreshPortNames()
         {
+            Console.WriteLine("Serial handler test ");
             PortNames.Clear();
             foreach (var port in Serial.GetAvailablePorts())
             {

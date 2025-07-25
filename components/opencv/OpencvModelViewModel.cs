@@ -51,35 +51,22 @@ namespace components
 
         public void ISP()
         {
-            // Split the channels
             Mat[] imageRGB = Cv2.Split(_mat);
-
-            // Calculate mean for each channel
             Scalar meanB = Cv2.Mean(imageRGB[0]);
             Scalar meanG = Cv2.Mean(imageRGB[1]);
             Scalar meanR = Cv2.Mean(imageRGB[2]);
             double B = meanB.Val0;
             double G = meanG.Val0;
             double R = meanR.Val0;
-
-            // Calculate gain for each channel
             double KB = (R + G + B) / (3 * B);
             double KG = (R + G + B) / (3 * G);
             double KR = (R + G + B) / (3 * R);
-
-            // Adjust each channel
             imageRGB[0].ConvertTo(imageRGB[0], imageRGB[0].Type(), KB);
             imageRGB[1].ConvertTo(imageRGB[1], imageRGB[1].Type(), KG);
             imageRGB[2].ConvertTo(imageRGB[2], imageRGB[2].Type(), KR);
-
-            // Merge channels back
             Cv2.Merge(imageRGB, _mat);
-
-            // Dispose temporary Mats
             foreach (var m in imageRGB)
-            {
                 m.Dispose();
-            }
         }
 
         public void ToGray()
@@ -122,7 +109,6 @@ namespace components
 
         public void color_track(string upcolor, string downcolor)
         {
-            // 解析16进制色彩字符串为RGB
             (int R, int G, int B) ParseHexColor(string hex)
             {
                 hex = hex?.TrimStart('#') ?? "";
@@ -139,10 +125,10 @@ namespace components
                 }
                 return (0, 0, 0);
             }
+
             var upRgb = ParseHexColor(upcolor);
             var downRgb = ParseHexColor(downcolor);
 
-            // 转换upcolor到HSV
             using var upMat = new Mat(1, 1, MatType.CV_8UC3, new Scalar(upRgb.B, upRgb.G, upRgb.R));
             using var upHsv = new Mat();
             Cv2.CvtColor(upMat, upHsv, ColorConversionCodes.BGR2HSV);
@@ -151,7 +137,6 @@ namespace components
             int upS = upHsvVec.Item1;
             int upV = upHsvVec.Item2;
 
-            // 转换downcolor到HSV
             using var downMat = new Mat(1, 1, MatType.CV_8UC3, new Scalar(downRgb.B, downRgb.G, downRgb.R));
             using var downHsv = new Mat();
             Cv2.CvtColor(downMat, downHsv, ColorConversionCodes.BGR2HSV);
@@ -160,7 +145,6 @@ namespace components
             int downS = downHsvVec.Item1;
             int downV = downHsvVec.Item2;
 
-            // 自动调整上下限，保证down<=up
             int minH = Math.Min(downH, upH);
             int maxH = Math.Max(downH, upH);
             int minS = Math.Min(downS, upS);
@@ -168,22 +152,13 @@ namespace components
             int minV = Math.Min(downV, upV);
             int maxV = Math.Max(downV, upV);
 
-            Debug.WriteLine($"{upcolor} RGB({upRgb.R},{upRgb.G},{upRgb.B}) -> HSV({upH},{upS},{upV})");
-            Debug.WriteLine($"{downcolor} RGB({downRgb.R},{downRgb.G},{downRgb.B}) -> HSV({downH},{downS},{downV})");
-            // 你可以根据需要返回或保存HSV值
-
             Mat pic = new Mat();
             Cv2.CvtColor(_mat, pic, ColorConversionCodes.BGR2HSV);
             Cv2.InRange(pic, new Scalar(minH, minS, minV), new Scalar(maxH, maxS, maxV), _mat);
             pic = _mat.Clone();
             Cv2.Erode(_mat, pic, null, null, 2);
             Cv2.Dilate(pic, _mat, null, null, 2);
-            // pic = _mat.Clone();
-            // Cv2.BitwiseAnd(pic, pic, _mat, null);
-            // _mat = pic.Clone();
-
         }
-
 
         public void Dispose()
         {
@@ -191,11 +166,13 @@ namespace components
         }
     }
 
-    public partial class OpencvModelViewModel : ObservableObject
+    public partial class OpencvModelViewModel : ObservableObject, IDisposable
     {
-        public ObservableCollection<string> CameraDevices { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> CameraDevices { set; get; } = new();
+
         [ObservableProperty]
         private int selectedCameraIndex;
+
         private Bitmap? cameraImage;
         public Bitmap? CameraImage
         {
@@ -209,15 +186,15 @@ namespace components
                 }
             }
         }
-        private Thread? _cameraThread;
-        private bool _running = false;
 
+        private Thread? _cameraThread;
+        private VideoCapture? cap;
+        private bool _running = false;
         private readonly object _lock = new();
         private PictureInterface _picture = new PictureInterface(new Mat());
-        // private bool _isCannyMode = true;
+
         [ObservableProperty]
         private string cannyButtonText = "canny";
-        // private bool _isIspMode = false;
         [ObservableProperty]
         private string ispButtonText = "白平衡";
 
@@ -240,7 +217,7 @@ namespace components
         [ObservableProperty]
         private bool isBinaryEnabled = false;
         [ObservableProperty]
-        private double imageAspectRatio = 4.0 / 3.0; // 默认宽高比
+        private double imageAspectRatio = 4.0 / 3.0;
         [ObservableProperty]
         private int cannyThreshold1 = 100;
         [ObservableProperty]
@@ -255,7 +232,6 @@ namespace components
         public OpencvModelViewModel()
         {
             RefreshCameraDevices();
-            StartCamera();
         }
 
         public void RefreshCameraDevices()
@@ -263,12 +239,7 @@ namespace components
             CameraDevices.Clear();
             for (int i = 0; i < 5; i++)
             {
-                using var cap = new VideoCapture(i);
-                if (cap.IsOpened())
-                {
-                    CameraDevices.Add($"摄像头 {i}");
-                    cap.Release();
-                }
+                CameraDevices.Add($"摄像头 {i}");
             }
             if (CameraDevices.Count > 0)
                 SelectedCameraIndex = 0;
@@ -276,81 +247,105 @@ namespace components
 
         partial void OnSelectedCameraIndexChanged(int value)
         {
-            StartCamera();
+            StopCamera();
+            // StartCamera();
         }
 
-        public void Source_ComboBox_DropDownOpened(object? sender, System.EventArgs e)
+        public void Source_ComboBox_DropDownOpened(object? sender, EventArgs e)
         {
             RefreshCameraDevices();
         }
 
         private void StartCamera()
         {
-            _running = false;
-            _cameraThread?.Join();
+            StopCamera();
+
+            cap = new VideoCapture(SelectedCameraIndex);
+            if (!cap.IsOpened())
+            {
+                Console.WriteLine("无法打开摄像头");
+                return;
+            }
+
             _running = true;
-            _cameraThread = new Thread(CameraLoop) { IsBackground = true };
+            _cameraThread = new Thread(CameraLoop)
+            {
+                IsBackground = true
+            };
             _cameraThread.Start();
         }
 
+        private void StopCamera()
+        {
+            _running = false;
+
+            if (_cameraThread != null && _cameraThread.IsAlive)
+            {
+                _cameraThread.Join();
+                _cameraThread = null;
+            }
+
+            if (cap != null)
+            {
+                cap.Release();
+                cap.Dispose();
+                cap = null;
+            }
+        }
 
         private void CameraLoop()
         {
-            using var cap = new VideoCapture(SelectedCameraIndex);
-            while (_running)
+            try
             {
-                lock (_lock)
+                while (_running && cap != null && cap.IsOpened())
                 {
-                    cap.Read(_picture.Mat);
-                    if (!_picture.Mat.Empty())
+                    lock (_lock)
                     {
-                        Bitmap bmp;
-                        var tempPic = _picture.Clone();
-                        // 处理顺序：ISP -> Gray -> Binary -> Canny -> ColorTrack
-                        if (IsIspEnabled)
-                            tempPic.ISP();
-                        if (IsBinaryEnabled)
+                        cap.Read(_picture.Mat);
+                        if (!_picture.Mat.Empty())
                         {
-                            tempPic.ToGray();
-                            tempPic.ToBinary();
-                        }
-                        if (IsCannyEnabled)
-                        {
-                            if (!IsBinaryEnabled)
+                            var tempPic = _picture.Clone();
+                            if (IsIspEnabled) tempPic.ISP();
+                            if (IsBinaryEnabled)
+                            {
                                 tempPic.ToGray();
-                            tempPic.Canny(CannyThreshold1, CannyThreshold2);
+                                tempPic.ToBinary();
+                            }
+                            if (IsCannyEnabled)
+                            {
+                                if (!IsBinaryEnabled) tempPic.ToGray();
+                                tempPic.Canny(CannyThreshold1, CannyThreshold2);
+                            }
+                            if (IsColorTrackEnabled)
+                            {
+                                tempPic.color_track(ColorTrackUp, ColorTrackDown);
+                            }
+
+                            using var ms = tempPic.ToMemoryStream();
+                            ms.Seek(0, SeekOrigin.Begin);
+                            var bmp = new Bitmap(ms);
+                            tempPic.Dispose();
+
+                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            {
+                                CameraImage = bmp;
+                            });
                         }
-                        if (IsColorTrackEnabled)
-                        {
-                            tempPic.color_track(ColorTrackUp, ColorTrackDown);
-                        }
-                        using var ms = tempPic.ToMemoryStream();
-                        ms.Seek(0, System.IO.SeekOrigin.Begin);
-                        bmp = new Bitmap(ms);
-                        tempPic.Dispose();
-                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        {
-                            CameraImage = bmp;
-                        });
                     }
+                    Thread.Sleep(30);
                 }
-                Thread.Sleep(30);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Camera loop error: {ex.Message}");
             }
         }
 
         [RelayCommand]
-        private void Canny()
-        {
-            IsCannyEnabled = !IsCannyEnabled;
-            IsOriginalEnabled = false;
-        }
+        private void Canny() => IsCannyEnabled = !IsCannyEnabled;
 
         [RelayCommand]
-        private void Isp()
-        {
-            IsIspEnabled = !IsIspEnabled;
-            IsOriginalEnabled = false;
-        }
+        private void Isp() => IsIspEnabled = !IsIspEnabled;
 
         [RelayCommand]
         private void ShowOriginal()
@@ -360,15 +355,24 @@ namespace components
             IsBinaryEnabled = false;
         }
 
+        [RelayCommand]
+        private void OpenCamera() => StartCamera();
+
+        [RelayCommand]
+        private void CloseCamera() => StopCamera();
+
         public void OnImageClicked(Avalonia.Point point, double imgWidth, double imgHeight)
         {
-            // 坐标显示固定在图像左上角，仅在图像范围内显示
             ClickCoordMargin = new Thickness(5, 5, 0, 0);
             ClickCoordText = $"({(int)point.X},{(int)point.Y})";
             IsCoordVisible = point.X >= 0 && point.X <= imgWidth && point.Y >= 0 && point.Y <= imgHeight;
         }
+
+        public void Dispose()
+        {
+            Console.WriteLine("Opencv Dispose");
+            StopCamera();
+            _picture?.Dispose();
+        }
     }
-
 }
-
-

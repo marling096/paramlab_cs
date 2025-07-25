@@ -46,11 +46,6 @@ namespace Editor
                 editor.LoadFromFile?.Invoke();
             }
 
-            // if (e.Key == Key.Delete)
-            // {
-            //     e.Handled = true;
-            //     // editor.Delete?.Invoke();
-            // }
 
         }
 

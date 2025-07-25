@@ -164,7 +164,7 @@ namespace components
         protected override Control CreateView()
         {
 
-            Console.WriteLine("添加元素");
+            Console.WriteLine("添加");
             Body.SetTitle("Sender");
 
             var panel = new SenderView(input =>

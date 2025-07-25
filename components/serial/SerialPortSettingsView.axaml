@@ -6,15 +6,15 @@
   xmlns:fluent="clr-namespace:Avalonia.Themes.Fluent;assembly=Avalonia.Themes.Fluent"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:vm="clr-namespace:components"
+  Width="250"
+  Height="550"
   x:DataType="vm:SerialPortSettingsViewModel"
   mc:Ignorable="d">
   <UserControl.DataContext>
     <vm:SerialPortSettingsViewModel />
   </UserControl.DataContext>
 
-  <Grid
-    Name="SerialGrid"
->
+  <Grid Name="SerialGrid">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="2*" />

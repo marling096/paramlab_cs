@@ -19,7 +19,7 @@ namespace Editor
 
         public Canvas _canvas;
 
-        public Grid _target;
+        public Control _target;
 
         private Control? _dragging;
 
@@ -34,15 +34,7 @@ namespace Editor
             bottomleft = new DragResizeThumbs();
             bottomright = new DragResizeThumbs();
 
-            _target = new Grid
-            {
-                Width = 200,
-                Height = 300,
-                // HorizontalAlignment = HorizontalAlignment.Stretch,
-                // VerticalAlignment = VerticalAlignment.Stretch,
-            };
-
-            _target.Children.Add(target);
+            _target = target;
             Canvas.SetLeft(_target, x);
             Canvas.SetTop(_target, y);
 
@@ -62,8 +54,6 @@ namespace Editor
             _canvas.Children.Add(topright);
             _canvas.Children.Add(bottomleft);
             _canvas.Children.Add(bottomright);
-
-            // Console.WriteLine("success");
 
         }
 
@@ -113,7 +103,7 @@ namespace Editor
 
         private void OnDragEnd(object? sender, PointerReleasedEventArgs e)
         {
-            e.Pointer.Capture(null);
+            // e.Pointer.Capture(null);
             _dragging = null;
         }
 
@@ -126,7 +116,7 @@ namespace Editor
                 {
                     _dragStart = e.GetPosition(_canvas);
                     _dragging = ctrl;
-                    e.Pointer.Capture(ctrl);
+                    // e.Pointer.Capture(ctrl);
                 }
             }
 
@@ -140,7 +130,6 @@ namespace Editor
 
         public void Dispose()
         {
-            Console.WriteLine("析构");
             _canvas.Children.Remove(topleft);
             _canvas.Children.Remove(topright);
             _canvas.Children.Remove(bottomleft);

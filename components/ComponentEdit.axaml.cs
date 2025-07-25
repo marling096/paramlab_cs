@@ -33,7 +33,6 @@ namespace components
         public Action<string> ChangeAction;
         public Param()
         {
-
             param_subs.CollectionChanged += param_subs_Changed;
             param_pubs.CollectionChanged += param_pubs_Changed;
         }
@@ -150,7 +149,7 @@ namespace components
             var propertyGrid = new PropertyGrid
             {
                 BorderThickness = new Thickness(1),
-                Background = Brushes.Black,
+                Background = Brushes.White,
                 CornerRadius = new CornerRadius(0.5),
                 Margin = new Thickness(1),
                 DataContext = component_param,

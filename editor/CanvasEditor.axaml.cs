@@ -106,43 +106,41 @@ namespace Editor
         {
             if (args.Source is Control clickedControl)
             {
-                var canvas = this.FindControl<Canvas>("EditorCanvas");
+                // Console.WriteLine($"找到 sender控件: {sender.GetType().Name}");
+                var canvas = this.FindControl<Canvas>("EditorCanvas"); // 替换为你的 Canvas 名称
                 if (canvas == null) return;
 
                 Control? current = clickedControl;
 
+                // 一直向上查找，直到其 Parent 是 canvas 为止
                 while (current != null && current.GetVisualParent() is Control parent)
                 {
-                    var grandParent = parent.GetVisualParent();
-
-                    if (grandParent == canvas)
+                    if (parent == canvas)
                     {
-                        // 找到 Canvas 的直接子控件的子控件（即孙子节点）
+                        // 找到 Canvas 的直接子控件
+                        // Console.WriteLine($"找到 Canvas 子控件: {current.GetType().Name}, Name: {current.Name}");
+                        // Console.WriteLine($"hash{current.GetHashCode()}");
                         Current_ctrl = current;
-                        // Console.WriteLine($"找到 Canvas 子控件: {Current_ctrl.GetType().Name}, Name: {Current_ctrl.Name}");
-                        // Console.WriteLine($"hash{Current_ctrl.GetHashCode()}");
                         break;
                     }
+
                     current = parent;
                 }
+
             }
 
             var point = args.GetCurrentPoint(sender as Control);
             this.currentX = point.Position.X;
             this.currentY = point.Position.Y;
-
             if (point.Properties.IsLeftButtonPressed)
             {
-                // ...
             }
             if (point.Properties.IsRightButtonPressed)
             {
                 contextMenu.Open(EditorCanvas);
             }
 
-
         }
-
 
         public void AddComponent(string description, double x, double y, string? id = null)
         {
@@ -169,8 +167,7 @@ namespace Editor
 
         public void RemoveComponent(string id)
         {
-            var parent = _components[id].GetVisualParent() as Control;
-            EditorCanvas.Children.Remove(parent);
+            EditorCanvas.Children.Remove(_components[id]);
             Adorners[id].Dispose();
             ComponentManager.Instance.DisposComponent(id);
             Adorners.Remove(id);
@@ -192,8 +189,8 @@ namespace Editor
                         {
                             if (!owner._forceClose)
                             {
-                                e.Cancel = true;                 // 取消默认关闭行为
-                                win.Hide();            // 改为隐藏窗口
+                                e.Cancel = true;
+                                win.Hide();
                             }
 
                         };

@@ -37,6 +37,7 @@ namespace Editor
 
             _target_left = Canvas.GetLeft(_target);
             _target_top = Canvas.GetTop(_target);
+            Console.WriteLine($"left : {_target_left} Top : {_target_top}");
 
             _target_width = _target.Width;
             _target_height = _target.Height;

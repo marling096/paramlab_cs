@@ -18,6 +18,7 @@ using components;
 using Avalonia.Controls.Shapes;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
+using Avalonia.VisualTree;
 
 namespace Editor
 {

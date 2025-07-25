@@ -172,7 +172,8 @@ namespace components
 
         protected override Control CreateView()
         {
-
+            Console.WriteLine("添加Display");
+            Body.SetTitle("Display");
 
             return Body;
         }

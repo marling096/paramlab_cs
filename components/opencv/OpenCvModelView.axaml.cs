@@ -1,4 +1,5 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 
@@ -15,6 +16,16 @@ public partial class OpenCvModelView : UserControl
         SourceComboBox.DropDownOpened += Source_ComboBox_DropDownOpened;
     }
 
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        if (this.DataContext is IDisposable disposable)
+        {
+            disposable.Dispose();
+            this.DataContext = null;
+        }
+    }
     private void Source_ComboBox_DropDownOpened(object? sender, System.EventArgs e)
     {
         if (DataContext is OpencvModelViewModel vm)

@@ -2,7 +2,9 @@
     x:Class="components.ComponentBody"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:components="clr-namespace:components">
+    xmlns:components="clr-namespace:components"
+    Width = "150"
+    Height = "150">
     <Grid
         Name="Body"
         HorizontalAlignment="Stretch"

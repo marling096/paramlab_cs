@@ -46,11 +46,7 @@ namespace components
         {
             foreach (var sub in Sub_handler)
             {
-                foreach (var handler in sub.Value)
-                {
-                    DeleteSubscribe(sub.Key, handler);
-                }
-
+                UnSubscribe<Object>(sub.Key, ReceiveDataEvent);
             }
 
         }

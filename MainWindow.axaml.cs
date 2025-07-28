@@ -25,13 +25,13 @@ public partial class MainWindow : Window
         MainGrid.Children.Add(editor);
         var task = new ScheduledTask(500, () =>
 {
-    string imagePath = "1.png";
-    if (File.Exists(imagePath))
-    {
-        var bitmap = new Bitmap(imagePath);
-        // EventHub.Instance.Publish("paramTest", bitmap);
-        // EventHub.Instance.Publish("paramTest", "Hello, world!");
-    }
+    // string imagePath = "1.png";
+    // if (File.Exists(imagePath))
+    // {
+    //     var bitmap = new Bitmap(imagePath);
+    //     EventHub.Instance.Publish("paramTest", bitmap);
+    //     EventHub.Instance.Publish("paramTest", "Hello, world!");
+    // }
 
 });
 

@@ -46,11 +46,7 @@ namespace components
         {
             foreach (var sub in Sub_handler)
             {
-                foreach (var handler in sub.Value)
-                {
-                    DeleteSubscribe(sub.Key, handler);
-                }
-
+                UnSubscribe<Object>(sub.Key, ReceiveDataEvent);
             }
 
         }
@@ -90,6 +86,26 @@ namespace components
 
         }
         public override void DeleteSubscribe(string? _eventName, Action<Object>? handler)
+        {
+            if (_eventName != null && _eventName != "")
+            {
+                if (Subs.Contains(_eventName))
+                {
+                    Subs.Remove(_eventName);
+                    if (handler != null)
+                        Sub_handler[_eventName].Remove(handler);
+                    else
+                    {
+                        Sub_handler[_eventName].Remove(ReceiveDataEvent);
+                    }
+                    UnSubscribe<Object>(_eventName, ReceiveDataEvent);
+
+                }
+            }
+
+        }
+
+        public void delSubscribe(string? _eventName, Action<Object>? handler)
         {
             if (_eventName != null && _eventName != "")
             {

@@ -41,8 +41,8 @@ namespace Editor
         public List<EditorPlugin> plugins = new List<EditorPlugin>();
 
         public Dictionary<string, DragResizeAdorner> Adorners = new();
-        public Dictionary<Control, string> components = new();//ctrl id
-        public Dictionary<string, Control> _components = new();//id ctrl 
+        public Dictionary<Control, string> components = new();
+        public Dictionary<string, Control> _components = new();
         public ContextMenu contextMenu = new ContextMenu();
 
         public Control Current_ctrl = new Control();
@@ -107,7 +107,7 @@ namespace Editor
             if (args.Source is Control clickedControl)
             {
                 // Console.WriteLine($"找到 sender控件: {sender.GetType().Name}");
-                var canvas = this.FindControl<Canvas>("EditorCanvas"); // 替换为你的 Canvas 名称
+                var canvas = this.FindControl<Canvas>("EditorCanvas"); 
                 if (canvas == null) return;
 
                 Control? current = clickedControl;
@@ -117,9 +117,6 @@ namespace Editor
                 {
                     if (parent == canvas)
                     {
-                        // 找到 Canvas 的直接子控件
-                        // Console.WriteLine($"找到 Canvas 子控件: {current.GetType().Name}, Name: {current.Name}");
-                        // Console.WriteLine($"hash{current.GetHashCode()}");
                         Current_ctrl = current;
                         break;
                     }
@@ -128,7 +125,6 @@ namespace Editor
                 }
 
             }
-
             var point = args.GetCurrentPoint(sender as Control);
             this.currentX = point.Position.X;
             this.currentY = point.Position.Y;

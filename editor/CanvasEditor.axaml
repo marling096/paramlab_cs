@@ -9,6 +9,25 @@
             Source="avares://paramlab_cs/assets/editor-bg.png"
             Stretch="UniformToFill" />
 
-        <Canvas x:Name="EditorCanvas" Background="#84FFFFFF" />
+        <Border Background="Transparent">
+            <Grid>
+                <!--  只模糊此区域内的背景图  -->
+                <Image
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Source="avares://paramlab_cs/assets/editor-bg.png"
+                    Stretch="UniformToFill">
+                    <Image.Effect>
+                        <BlurEffect Radius="15" />
+                    </Image.Effect>
+                </Image>
+
+                <!--  半透明遮罩以实现毛玻璃效果（可调）  -->
+                <Rectangle Fill="#84FFFFFF" />
+
+                <!--  可在此 Canvas 上绘制，不会被模糊  -->
+                <Canvas x:Name="EditorCanvas" Background="Transparent" />
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

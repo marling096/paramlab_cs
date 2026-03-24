@@ -18,7 +18,7 @@ namespace components
 {
 
 
-    public class DisplayComponent : VisualComponentBase
+    public class SerialComponent : VisualComponentBase
     {
 
 
@@ -26,15 +26,15 @@ namespace components
         public override List<string> Subs { set; get; } = new List<string>();
         private Dictionary<string, List<Action<Object>>> Sub_handler = new();
 
-        public ComponentBody Body = new ComponentBody();
+        public ComponentBody Comp_Body = new ComponentBody();
 
         public ComponentEdit Edit = new ComponentEdit();
-        public DisplayComponent(string id)
+        public SerialComponent(string id)
         {
             Id = id;
         }
 
-        public static string Description { get; } = "显示器";
+        public static string Description { get; } = "串口组件";
         public override string Id { get; set; }
 
         public override void Mount()
@@ -105,43 +105,11 @@ namespace components
 
         }
 
-        public void delSubscribe(string? _eventName, Action<Object>? handler)
-        {
-            if (_eventName != null && _eventName != "")
-            {
-                if (Subs.Contains(_eventName))
-                {
-                    Subs.Remove(_eventName);
-                    if (handler != null)
-                        Sub_handler[_eventName].Remove(handler);
-                    else
-                    {
-                        Sub_handler[_eventName].Remove(ReceiveDataEvent);
-                    }
-                    UnSubscribe<Object>(_eventName, ReceiveDataEvent);
-
-                }
-            }
-
-        }
-
 
         private void ReceiveDataEvent(Object data)
         {
             Dispatcher.UIThread.Post(() =>
             {
-                if (data is string str)
-                {
-                    var text = new TextBlock { Text = str, Margin = new Thickness(0, 0, 0, 5) };
-                    Body.Context.Child = text;
-                    Console.WriteLine("是自定义类型: ");
-                }
-
-                if (data is Bitmap bitmap)
-                {
-                    var img = new Image { Source = bitmap };
-                    Body.Context.Child = img;
-                }
             });
             foreach (var sub in Subs)
             {
@@ -188,10 +156,10 @@ namespace components
 
         protected override Control CreateView()
         {
-            Console.WriteLine("添加Display");
-            Body.SetTitle("Display");
+            SerialPortSettingsView SerialView = new SerialPortSettingsView();
 
-            return Body;
+            return SerialView;
+
         }
     }
 

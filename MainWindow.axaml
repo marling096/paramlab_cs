@@ -5,6 +5,27 @@
   xmlns:local="clr-namespace:paramlab_cs"
   Title="Visual Editor"
   Width="800"
-  Height="600">
-  <Grid Name="MainGrid" />
+  Height="600"
+  Focusable="True">
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="New" />
+        <MenuItem Header="Open..." />
+        <MenuItem Header="Save" />
+        <Separator />
+        <MenuItem Header="Exit" />
+      </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="Undo" />
+        <MenuItem Header="Redo" />
+        <Separator />
+        <MenuItem Header="Cut" />
+        <MenuItem Header="Copy" />
+        <MenuItem Header="Paste" />
+      </MenuItem>
+    </Menu>
+
+    <Grid Name="MainGrid" />
+  </DockPanel>
 </Window>

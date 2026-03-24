@@ -1,0 +1,160 @@
+<UserControl
+  x:Class="components.OpenCvModelView"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:vm="clr-namespace:components"
+  Width="350"
+  Height="350"
+  x:DataType="vm:OpencvModelViewModel"
+  Background="LightGreen">
+  <UserControl.Resources>
+    <vm:BoolToBrushConverter
+      x:Key="BoolToBrushConverter"
+      FalseBrush="LightGray"
+      TrueBrush="LightSkyBlue" />
+    <vm:BoolToBrushConverter
+      x:Key="OriginalBrushConverter"
+      FalseBrush="LightGray"
+      TrueBrush="LightSkyBlue" />
+    <vm:OriginalButtonBrushConverter x:Key="OriginalButtonBrushConverter" />
+  </UserControl.Resources>
+  <Grid
+    Name="OpencvGrid"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch"
+    Background="White">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="3*" />
+      <RowDefinition Height="2*" />
+    </Grid.RowDefinitions>
+    <StackPanel
+      Grid.Row="0"
+      Margin="20"
+      VerticalAlignment="Top"
+      Orientation="Horizontal"
+      Spacing="10">
+      <TextBlock
+        VerticalAlignment="Center"
+        FontSize="12"
+        FontWeight="Bold"
+        Text="摄像头" />
+      <ComboBox
+        x:Name="SourceComboBox"
+        Width="100"
+        MinHeight="32"
+        Margin="10,0,0,0"
+        ItemsSource="{Binding CameraDevices}"
+        SelectedIndex="{Binding SelectedCameraIndex, Mode=TwoWay}" />
+      <Button
+        MinWidth="75"
+        Margin="10,0,0,0"
+        Command="{Binding OpenCameraCommand}"
+        Content="打开" />
+      <Button
+        MinWidth="75"
+        Margin="10,0,0,0"
+        Command="{Binding CloseCameraCommand}"
+        Content="关闭" />
+      <Button
+        MinWidth="100"
+        Margin="10,0,0,0"
+        Command="{Binding ShowOriginalCommand}"
+        Content="显示原图" />
+      <CheckBox
+        MinWidth="100"
+        Margin="10,0,0,0"
+        Content="白平衡"
+        IsChecked="{Binding IsIspEnabled, Mode=TwoWay}" />
+      <CheckBox
+        MinWidth="100"
+        Margin="10,0,0,0"
+        Content="二值化"
+        IsChecked="{Binding IsBinaryEnabled, Mode=TwoWay}" />
+
+    </StackPanel>
+    <Border
+      Grid.Row="1"
+      Margin="10,0,10,10"
+      Background="#FFEEEEEE"
+      CornerRadius="8">
+      <Grid>
+        <Image
+          x:Name="CameraImage"
+          MinWidth="100"
+          MinHeight="100"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          PointerPressed="CameraImage_PointerPressed"
+          Source="{Binding CameraImage}"
+          Stretch="Uniform" />
+        <TextBlock
+          x:Name="CoordText"
+          Margin="{Binding ClickCoordMargin}"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Top"
+          Background="#AAFFFFFF"
+          FontSize="14"
+          Foreground="Red"
+          IsVisible="{Binding IsCoordVisible}"
+          Text="{Binding ClickCoordText}" />
+      </Grid>
+    </Border>
+    <Border
+      Grid.Row="2"
+      Margin="10,0,10,10"
+      Background="White"
+      CornerRadius="8">
+      <StackPanel
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"
+        Orientation="Vertical"
+        Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="16">
+          <CheckBox
+            MinWidth="80"
+            Content="Canny"
+            IsChecked="{Binding IsCannyEnabled, Mode=TwoWay}" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="阈值1:" />
+          <TextBox
+            Width="60"
+            Text="{Binding CannyThreshold1, Mode=TwoWay}"
+            Watermark="100" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="阈值2:" />
+          <TextBox
+            Width="60"
+            Text="{Binding CannyThreshold2, Mode=TwoWay}"
+            Watermark="200" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="16">
+          <CheckBox
+            MinWidth="100"
+            Content="色彩追踪"
+            IsChecked="{Binding IsColorTrackEnabled, Mode=TwoWay}" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="上限色:" />
+          <TextBox
+            Width="80"
+            Text="{Binding ColorTrackUp, Mode=TwoWay}"
+            Watermark="#FF0000" />
+          <TextBlock
+            Margin="8,0,0,0"
+            VerticalAlignment="Center"
+            Text="下限色:" />
+          <TextBox
+            Width="80"
+            Text="{Binding ColorTrackDown, Mode=TwoWay}"
+            Watermark="#00FF00" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

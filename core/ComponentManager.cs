@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Tmds.DBus.Protocol;
 
 namespace core
 {
@@ -11,11 +12,14 @@ namespace core
     public interface IVisualComponent : IDisposable
     {
         string Id { get; set; }
-        void Initialize();
-        void Activate();
-        void Deactivate();
-        void RegisterSubscriptions(string? eventName);
-        void RegisterPublisher(string? eventName);
+        void Mount();
+        void Unmount();
+        void AddSubscribe(string? _eventName, Action<Object>? handler);
+
+        void DeleteSubscribe(string? _eventName, Action<Object>? handler);
+
+        void AddPublisher(string? eventName, object? message = null);
+        void DeletePublisher(string? eventName);
 
         Control GetView(); // Avalonia 控件
     }
@@ -24,14 +28,23 @@ namespace core
     public abstract class VisualComponentBase : IVisualComponent
     {
         protected Control? view;
-        protected Dictionary<string, Delegate> subscriptions = new();
-        protected Dictionary<string, string> Events = new();
+
         public abstract string Id { get; set; }
-        public abstract void Initialize();
-        public abstract void Activate();
-        public abstract void Deactivate();
-        public abstract void RegisterSubscriptions(string? eventName);
-        public abstract void RegisterPublisher(string? eventName);
+
+        public abstract List<string> Pubs { set; get; }
+
+        public abstract List<string> Subs { set; get; }
+
+        public abstract void Mount();
+        public abstract void Unmount();
+
+        public abstract void AddSubscribe(string? _eventName, Action<Object>? handler);
+
+        public abstract void DeleteSubscribe(string? _eventName, Action<Object>? handler);
+
+        public abstract void AddPublisher(string? eventName, object? message = null);
+
+        public abstract void DeletePublisher(string? eventName);
 
         public virtual Control GetView()
         {
@@ -39,42 +52,51 @@ namespace core
             return view!;
         }
 
-        public virtual Control GetParamPanel()
+        public virtual Control GetParamView()
         {
-            view ??= CreateParamPanel();
-            return view!;
+            return CreateParamView()!;
         }
 
         protected abstract Control CreateView();
 
-        protected abstract Control CreateParamPanel();
+        protected abstract Control CreateParamView();
 
-        protected void Subscribe<T>(string eventName, Action<T> handler)
+
+        protected void Subscribe<Object>(string eventName, Action<Object> handler)
         {
             EventHub.Instance.Subscribe(eventName, handler);
-            subscriptions[eventName] = handler;
+
         }
 
-        protected void UnSubscribe<T>(string eventName, Action<T> handler)
+        protected void UnSubscribe<Object>(string eventName, Action<Object> handler)
         {
             EventHub.Instance.Unsubscribe(eventName, handler);
-            subscriptions.Remove(eventName);
+
         }
 
-        protected void Publish<T>(string eventName, string data)
+        protected void Publish<Object>(string eventName, Object data)
         {
             EventHub.Instance.Publish(eventName, data);
 
         }
 
+        ~VisualComponentBase()
+        {
+
+            Dispose();
+        }
         public void Dispose()
         {
+            Unmount();
         }
+
+
     }
 
     public class ComponentManager
     {
-
+        private static readonly Lazy<ComponentManager> _instance = new(() => new ComponentManager());
+        public static ComponentManager Instance => _instance.Value;
         private Dictionary<string, VisualComponentBase> Components = new();
         private Dictionary<string, Type> ComponentTypes = new();
 
@@ -89,11 +111,18 @@ namespace core
             ComponentTypes = types.ToDictionary(t => t.GetProperty("Description")?.GetValue(null) as string ??
                 throw new ArgumentException($"Component {t.Name} does not have a static Description property."),
                                                   t => t);
-            Console.WriteLine("Registered base components:");
+            Console.WriteLine("Added base components:");
             foreach (var component in ComponentTypes)
             {
                 Console.WriteLine($" - {component.Key}");
             }
+        }
+
+        public void DisposComponent(string id)
+        {
+            var comp = Components[id];
+            comp.Unmount();
+            comp = null;
         }
         //
         public Control CreateFromBase(string Description, string Id)
@@ -102,66 +131,67 @@ namespace core
             if (ComponentTypes.TryGetValue(Description, out var type))
             {
                 var component = (VisualComponentBase)Activator.CreateInstance(type, Id)!;
-                component.Initialize();
-                component.Activate();
+                component.Mount();
                 Components[Id] = component;
                 return component.GetView();
             }
             throw new ArgumentException($"Component with description '{Description}' not found.");
         }
 
-        public Control CreateParamPanel(string Description, string Id)
+        public Control CreateParamPanel(string Id)
         {
-
-            if (ComponentTypes.TryGetValue(Description, out var type))
+            var comp = Components[Id];
+            if (comp != null)
             {
-                var component = (VisualComponentBase)Activator.CreateInstance(type, Id)!;
-                return component.GetParamPanel();
+                return comp.GetParamView();
             }
-            throw new ArgumentException($"Component with description '{Description}' not found.");
+            throw new ArgumentException($"Component with description '' not found.");
         }
 
-        public void Activate(string Description)
+        public void DeleteComponent(string Id)
         {
-            if (Components.TryGetValue(Description, out var comp))
-                comp.Activate();
+            var comp = Components[Id];
+            comp.Dispose();
+
         }
 
-        public void Deactivate(string Description)
+        public void Component_AddSubscribe(string id, string topic)
         {
-            if (Components.TryGetValue(Description, out var comp))
-                comp.Deactivate();
-        }
-
-        public Dictionary<string, Type> GetAll() => ComponentTypes;
-
-        public void AddComponentIn(string id, string subscription)
-        {
-            if (Components.TryGetValue(id, out var comp))
+            if (Components.TryGetValue(id, out var component))
             {
-                comp.RegisterSubscriptions(subscription);
+                component.AddSubscribe(topic, null);
             }
             else
             {
-                throw new ArgumentException($"Component with id '{id}' not found.");
+                throw new ArgumentException($"component not found.");
             }
-
 
         }
 
-        public void AddComponentOut(string id, string publisher)
+        public void Component_AddPublisher(string id, string topic)
         {
-            if (Components.TryGetValue(id, out var comp))
+            if (Components.TryGetValue(id, out var component))
             {
-                comp.RegisterPublisher(publisher);
+                component.AddPublisher(topic, null);
             }
             else
             {
-                throw new ArgumentException($"Component with id '{id}' not found.");
+                throw new ArgumentException($"component not found.");
             }
 
-
         }
+        public Dictionary<string, Type> GetAllTypes() => ComponentTypes;
+
+        public VisualComponentBase? GetComponent(string id)
+        {
+            if (Components.TryGetValue(id, out var component))
+            {
+                return component;
+            }
+            return null;
+        }
+
+
     }
 }
 
